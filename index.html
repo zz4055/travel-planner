@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>旅行规划小系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-tokens.css">
+  <link rel="stylesheet" href="design-system.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-mark" src="images/icons/home.png" alt="" width="40" height="40">
+        <div>
+          <h1 data-i18n="app.title">旅行规划小系统</h1>
+          <p class="brand-sub" data-i18n="app.subtitle">规划 · 记录 · 回忆</p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="lang-switch" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" data-lang="zh" data-i18n="lang.zh">中文</button>
+          <button type="button" class="lang-btn" data-lang="en" data-i18n="lang.en">English</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="shell">
+      <!-- 全局导航：只有 Home / Trips / Settings -->
+      <aside class="sidebar" id="globalSidebar">
+        <nav class="nav" aria-label="Main">
+          <button type="button" class="nav-btn active" data-app-view="home">
+            <img src="images/icons/home.png" alt="" class="nav-icon">
+            <span data-i18n="nav.home">首页</span>
+          </button>
+          <button type="button" class="nav-btn" data-app-view="trips">
+            <img src="images/icons/trips.png" alt="" class="nav-icon">
+            <span data-i18n="nav.trips">我的旅行</span>
+          </button>
+          <button type="button" class="nav-btn" data-app-view="settings">
+            <img src="images/icons/notes.png" alt="" class="nav-icon">
+            <span data-i18n="nav.settings">设置</span>
+          </button>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <!-- ========== HOME DASHBOARD ========== -->
+        <section class="view active" id="view-home">
+          <div class="page-header">
+            <div>
+              <p class="eyebrow" data-i18n="home.eyebrow">你的旅行日记</p>
+              <h2 data-i18n="home.dashboardTitle">首页</h2>
+            </div>
+            <button type="button" class="btn primary" id="dashCreateTrip" data-i18n="btn.createTrip">创建旅行</button>
+          </div>
+
+          <div id="dashboardEmpty" class="panel hero-panel" hidden>
+            <h2 data-i18n="home.emptyTitle">还没有旅程</h2>
+            <p data-i18n="home.emptyDesc">创建第一趟旅行，开始规划、记录和回忆。</p>
+            <button type="button" class="btn primary" id="dashEmptyCreate" data-i18n="btn.createTrip">创建旅行</button>
+          </div>
+
+          <div id="dashboardContent" class="dashboard">
+            <section class="panel dash-featured" id="dashCurrentTrip">
+              <div class="panel-head">
+                <h3 data-i18n="home.currentTrip">当前旅行</h3>
+                <span class="status-pill" id="dashStatus"></span>
+              </div>
+              <div class="featured-body">
+                <div class="featured-cover" id="dashCover"></div>
+                <div class="featured-meta">
+                  <h2 id="dashTripName"></h2>
+                  <p id="dashDestination"></p>
+                  <p id="dashDates"></p>
+                  <p class="countdown" id="dashCountdown"></p>
+                  <div class="form-actions">
+                    <button type="button" class="btn primary" id="dashOpenTrip" data-i18n="btn.continuePlanning">继续规划</button>
+                    <button type="button" class="btn" id="dashOpenMap" data-i18n="btn.openMap">打开地图</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 data-i18n="home.todaySchedule">今日行程</h3>
+              </div>
+              <div id="dashTodayList" class="list compact-list"></div>
+              <p class="empty" id="dashTodayEmpty" data-i18n="home.noToday">今天没有安排的任务。</p>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 data-i18n="home.upcomingTodo">即将到期</h3>
+              </div>
+              <div id="dashTodoList" class="list compact-list"></div>
+              <p class="empty" id="dashTodoEmpty" data-i18n="home.noUpcoming">没有即将到期的待办。</p>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 data-i18n="home.progress">旅行进度</h3>
+              </div>
+              <div class="progress-block">
+                <div class="progress-row">
+                  <span data-i18n="home.todoProgress">待办完成</span>
+                  <strong id="dashTodoProgress">0/0</strong>
+                </div>
+                <div class="progress-bar"><span id="dashTodoBar"></span></div>
+                <div class="progress-stats">
+                  <div><span data-i18n="home.placesCount">地点</span><strong id="dashPlaceCount">0</strong></div>
+                  <div><span data-i18n="home.notesCount">笔记</span><strong id="dashNoteCount">0</strong></div>
+                  <div><span data-i18n="home.photosCount">照片</span><strong id="dashPhotoCount">0</strong></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 data-i18n="home.recentNotes">最近笔记</h3>
+              </div>
+              <div id="dashNotesList" class="list compact-list"></div>
+              <p class="empty" id="dashNotesEmpty" data-i18n="msg.noNotes">还没有笔记。</p>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 data-i18n="home.recentPhotos">最近照片</h3>
+              </div>
+              <div id="dashPhotosList" class="dash-photo-row"></div>
+              <p class="empty" id="dashPhotosEmpty" data-i18n="msg.noPhotos">还没有照片记录。</p>
+            </section>
+          </div>
+        </section>
+
+        <!-- ========== MY TRIPS ========== -->
+        <section class="view" id="view-trips">
+          <div class="page-header">
+            <div>
+              <p class="eyebrow" data-i18n="trips.eyebrow">所有旅程</p>
+              <h2 data-i18n="trips.listTitle">我的旅行</h2>
+            </div>
+            <button type="button" class="btn primary" id="showTripFormBtn" data-i18n="btn.createTrip">创建旅行</button>
+          </div>
+
+          <div class="panel trip-form-panel" id="tripFormPanel" hidden>
+            <div class="panel-head">
+              <h3 id="tripFormTitle" data-i18n="trips.editTitle">编辑旅行</h3>
+            </div>
+            <form id="tripForm" class="form">
+              <input type="hidden" id="tripId">
+              <label>
+                <span data-i18n="label.tripName">旅行名称</span>
+                <input type="text" id="tripName" required data-i18n-placeholder="ph.tripName">
+              </label>
+              <label>
+                <span data-i18n="label.destination">目的地</span>
+                <input type="text" id="tripDestination" required data-i18n-placeholder="ph.destination">
+              </label>
+              <div class="form-row">
+                <label>
+                  <span data-i18n="label.startDate">开始日期</span>
+                  <input type="date" id="tripStart" required>
+                </label>
+                <label>
+                  <span data-i18n="label.endDate">结束日期</span>
+                  <input type="date" id="tripEnd" required>
+                </label>
+              </div>
+
+              <div class="cover-picker" id="editCoverPicker" data-cover-picker="edit"></div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn primary" data-i18n="btn.save">保存</button>
+                <button type="button" class="btn" id="tripFormReset" data-i18n="btn.cancel">取消</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="tripCardGrid" class="trip-card-grid"></div>
+          <p class="empty panel" id="tripEmpty">
+            <span data-i18n="msg.noTrips">还没有旅行。</span>
+            <span data-i18n="msg.createFirst">创建你的第一趟旅行吧。</span>
+          </p>
+        </section>
+
+        <!-- ========== CREATE JOURNEY WIZARD ========== -->
+        <section class="view" id="view-create">
+          <div class="journey-wizard" id="journeyWizard">
+            <div class="wizard-top">
+              <button type="button" class="ui-btn ui-btn--ghost" id="wizardCancel" data-i18n="btn.cancel">取消</button>
+              <div class="wizard-progress" aria-hidden="true">
+                <span class="wizard-dot is-active" data-step-dot="1"></span>
+                <span class="wizard-dot" data-step-dot="2"></span>
+                <span class="wizard-dot" data-step-dot="3"></span>
+                <span class="wizard-dot" data-step-dot="4"></span>
+                <span class="wizard-dot" data-step-dot="5"></span>
+              </div>
+              <span class="wizard-step-label" id="wizardStepLabel">1 / 5</span>
+            </div>
+
+            <!-- Step 1: Destination -->
+            <div class="wizard-step is-active" data-wizard-step="1">
+              <p class="ui-eyebrow" data-i18n="wizard.step1Eyebrow">开始一段旅程</p>
+              <h2 class="wizard-question" data-i18n="wizard.where">你要去哪里？</h2>
+              <div class="wizard-hero-destination" id="wizardHeroDestination" data-i18n="wizard.destinationPreview">目的地将出现在这里</div>
+              <div class="ui-search wizard-search">
+                <img class="ui-search__icon" src="images/icons/map.png" alt="">
+                <input
+                  class="ui-search__input"
+                  id="wizardDestination"
+                  type="text"
+                  autocomplete="off"
+                  data-i18n-placeholder="wizard.destinationPh"
+                  placeholder="搜索或输入目的地"
+                >
+              </div>
+              <div class="wizard-suggestions" id="wizardSuggestions"></div>
+            </div>
+
+            <!-- Step 2: Dates -->
+            <div class="wizard-step" data-wizard-step="2">
+              <p class="ui-eyebrow" data-i18n="wizard.step2Eyebrow">安排时间</p>
+              <h2 class="wizard-question" data-i18n="wizard.when">什么时候出发？</h2>
+              <div class="wizard-date-row">
+                <label class="ui-field">
+                  <span class="ui-label" data-i18n="label.startDate">开始日期</span>
+                  <input class="ui-input" type="date" id="wizardStart">
+                </label>
+                <span class="wizard-date-arrow" aria-hidden="true">→</span>
+                <label class="ui-field">
+                  <span class="ui-label" data-i18n="label.endDate">结束日期</span>
+                  <input class="ui-input" type="date" id="wizardEnd">
+                </label>
+              </div>
+              <div class="wizard-duration-card" id="wizardDurationCard">
+                <p class="wizard-duration-range" id="wizardDateRange" data-i18n="wizard.pickDates">选择开始和结束日期</p>
+                <p class="wizard-duration-days" id="wizardDurationDays"></p>
+              </div>
+            </div>
+
+            <!-- Step 3: Travel style -->
+            <div class="wizard-step" data-wizard-step="3">
+              <p class="ui-eyebrow" data-i18n="wizard.step3Eyebrow">旅行气质</p>
+              <h2 class="wizard-question" data-i18n="wizard.styleTitle">这次旅行更想怎样过？</h2>
+              <p class="wizard-help" data-i18n="wizard.styleHelp">可以选择多个兴趣，之后会用于推荐和整理。</p>
+              <div class="wizard-style-grid" id="wizardStyleGrid"></div>
+            </div>
+
+            <!-- Step 4: Cover -->
+            <div class="wizard-step" data-wizard-step="4">
+              <p class="ui-eyebrow" data-i18n="wizard.step4Eyebrow">封面氛围</p>
+              <h2 class="wizard-question" data-i18n="wizard.coverTitle">选择封面</h2>
+              <p class="wizard-help" data-i18n="wizard.coverHelp">可以上传图片、填写链接，或使用渐变预设。以后还能修改。</p>
+              <div class="cover-picker" id="wizardCoverPicker" data-cover-picker="wizard"></div>
+            </div>
+
+            <!-- Step 5: Summary -->
+            <div class="wizard-step" data-wizard-step="5">
+              <p class="ui-eyebrow" data-i18n="wizard.step5Eyebrow">准备出发</p>
+              <h2 class="wizard-question" data-i18n="wizard.summaryTitle">确认你的旅程</h2>
+              <article class="wizard-summary-card" id="wizardSummaryCard">
+                <div class="wizard-summary-cover" id="wizardSummaryCover"></div>
+                <div class="wizard-summary-body">
+                  <h3 id="wizardSummaryDestination"></h3>
+                  <p id="wizardSummaryDates"></p>
+                  <p id="wizardSummaryDuration"></p>
+                  <div class="wizard-summary-tags" id="wizardSummaryStyles"></div>
+                  <p class="wizard-summary-cover-label">
+                    <span data-i18n="wizard.coverLabel">封面</span>：
+                    <strong id="wizardSummaryCoverName"></strong>
+                  </p>
+                </div>
+              </article>
+            </div>
+
+            <div class="wizard-footer">
+              <button type="button" class="ui-btn ui-btn--ghost" id="wizardBack" data-i18n="wizard.back" hidden>上一步</button>
+              <div class="wizard-footer-right">
+                <button type="button" class="ui-btn ui-btn--primary" id="wizardNext" data-i18n="wizard.next">继续</button>
+                <button type="button" class="ui-btn ui-btn--primary" id="wizardCreate" data-i18n="wizard.create" hidden>开启旅程</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== SETTINGS ========== -->
+        <section class="view" id="view-settings">
+          <div class="page-header">
+            <div>
+              <p class="eyebrow" data-i18n="settings.eyebrow">偏好</p>
+              <h2 data-i18n="nav.settings">设置</h2>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <h3 data-i18n="settings.language">语言</h3>
+            </div>
+            <p class="hint" data-i18n="settings.languageHint">切换后会立即生效，并保存在本设备。</p>
+            <div class="lang-switch settings-lang">
+              <button type="button" class="lang-btn" data-lang="zh" data-i18n="lang.zh">中文</button>
+              <button type="button" class="lang-btn" data-lang="en" data-i18n="lang.en">English</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <h3 data-i18n="settings.about">关于</h3>
+            </div>
+            <p class="hint" data-i18n="settings.aboutText">第一版使用本地存储。之后可扩展账号、云同步、多人协作等功能。</p>
+            <p class="hint"><a href="design-system.html">Design System</a></p>
+          </div>
+        </section>
+
+        <!-- ========== TRIP WORKSPACE ========== -->
+        <section class="view" id="view-trip">
+          <div class="workspace">
+            <div class="workspace-header">
+              <button type="button" class="btn" id="backToTrips" data-i18n="btn.backToTrips">返回旅行列表</button>
+              <div class="workspace-title">
+                <p class="eyebrow" id="workspaceDestination"></p>
+                <h2 id="workspaceTripName"></h2>
+                <p id="workspaceDates"></p>
+              </div>
+              <div class="workspace-header-aside">
+                <span class="status-pill" id="workspaceStatus"></span>
+              </div>
+            </div>
+
+            <nav class="trip-tabs" aria-label="Trip sections">
+              <button type="button" class="trip-tab active" data-trip-tab="overview">
+                <img src="images/icons/home.png" alt="" class="tab-icon">
+                <span data-i18n="tab.overview">概览</span>
+              </button>
+              <button type="button" class="trip-tab" data-trip-tab="guide">
+                <img src="images/icons/guide.png" alt="" class="tab-icon">
+                <span data-i18n="tab.guide">攻略</span>
+              </button>
+              <button type="button" class="trip-tab" data-trip-tab="map">
+                <img src="images/icons/map.png" alt="" class="tab-icon">
+                <span data-i18n="tab.map">地图</span>
+              </button>
+              <button type="button" class="trip-tab" data-trip-tab="todo">
+                <img src="images/icons/todo.png" alt="" class="tab-icon">
+                <span data-i18n="tab.todo">待办</span>
+              </button>
+              <button type="button" class="trip-tab" data-trip-tab="calendar">
+                <img src="images/icons/calendar.png" alt="" class="tab-icon">
+                <span data-i18n="tab.calendar">日历</span>
+              </button>
+              <button type="button" class="trip-tab" data-trip-tab="favorites">
+                <span class="tab-heart" aria-hidden="true">♥</span>
+                <span>收藏</span>
+              </button>
+              <button type="button" class="trip-tab" data-trip-tab="notes">
+                <img src="images/icons/notes.png" alt="" class="tab-icon">
+                <span data-i18n="tab.notes">笔记</span>
+              </button>
+              <button type="button" class="trip-tab" data-trip-tab="gallery">
+                <img src="images/icons/photos.png" alt="" class="tab-icon">
+                <span data-i18n="tab.gallery">相册</span>
+              </button>
+              <button type="button" class="trip-tab" data-trip-tab="ai">
+                <img src="images/icons/guide.png" alt="" class="tab-icon">
+                <span data-i18n="tab.ai">AI 助手</span>
+              </button>
+            </nav>
+
+            <div class="workspace-body">
+              <!-- Overview: trip at a glance -->
+              <div class="trip-pane active" id="pane-overview">
+                <article class="overview-hero panel">
+                  <div class="overview-cover" id="overviewCover"></div>
+                  <div class="overview-hero-body">
+                    <div class="overview-title-row">
+                      <div>
+                        <p class="eyebrow" data-i18n="tab.overview">概览</p>
+                        <h2 id="ovTripTitle"></h2>
+                        <p class="overview-destination" id="ovDestination"></p>
+                      </div>
+                      <button type="button" class="btn" id="editTripFromOverview" data-i18n="btn.editTrip">编辑旅行</button>
+                    </div>
+                    <div class="overview-meta-row">
+                      <span><span data-i18n="label.startDate">开始日期</span> · <strong id="ovStartDate"></strong></span>
+                      <span><span data-i18n="label.endDate">结束日期</span> · <strong id="ovEndDate"></strong></span>
+                      <span><span data-i18n="label.duration">行程天数</span> · <strong id="ovDuration"></strong></span>
+                      <span class="status-pill" id="ovStatus"></span>
+                    </div>
+                    <p class="countdown" id="ovCountdown"></p>
+                    <div class="overview-styles" id="ovStyles"></div>
+                    <div class="overview-progress">
+                      <div class="panel-head">
+                        <h3 data-i18n="overview.planningProgress">规划进度</h3>
+                        <span id="ovTodoCount">0/0</span>
+                      </div>
+                      <div class="progress-bar"><span id="ovTodoBar"></span></div>
+                    </div>
+                    <div class="overview-quick">
+                      <p class="eyebrow" data-i18n="overview.quickActions">快捷操作</p>
+                      <div class="overview-quick-actions">
+                        <button type="button" class="btn primary" id="ovAddTodo" data-i18n="btn.addTodo">添加待办</button>
+                        <button type="button" class="btn" id="ovAddNote" data-i18n="btn.addNote">添加笔记</button>
+                        <button type="button" class="btn" id="ovAddPlace" data-i18n="btn.addPlace">添加地点</button>
+                        <button type="button" class="btn" id="ovOpenCalendar" data-i18n="btn.openCalendar">打开日历</button>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+
+                <div class="overview-previews">
+                  <section class="panel overview-preview">
+                    <div class="panel-head">
+                      <h3 data-i18n="overview.upcomingTodos">即将到期</h3>
+                    </div>
+                    <div id="ovUpcomingList" class="list compact-list"></div>
+                    <p class="empty" id="ovUpcomingEmpty" data-i18n="home.noUpcoming">没有即将到期的待办。</p>
+                  </section>
+                  <section class="panel overview-preview">
+                    <div class="panel-head">
+                      <h3 data-i18n="overview.todaySchedule">今日安排</h3>
+                    </div>
+                    <div id="ovTodayList" class="list compact-list"></div>
+                    <p class="empty" id="ovTodayEmpty" data-i18n="home.noToday">今天没有安排的任务。</p>
+                  </section>
+                  <section class="panel overview-preview">
+                    <div class="panel-head">
+                      <h3 data-i18n="overview.recentNotes">最近笔记</h3>
+                    </div>
+                    <div id="ovNotesList" class="list compact-list"></div>
+                    <p class="empty" id="ovNotesEmpty" data-i18n="msg.noNotes">还没有笔记。</p>
+                  </section>
+                  <section class="panel overview-preview overview-counts">
+                    <div class="overview-count">
+                      <span data-i18n="home.placesCount">地点</span>
+                      <strong id="ovPlaceCount">0</strong>
+                    </div>
+                    <div class="overview-count">
+                      <span data-i18n="home.photosCount">照片</span>
+                      <strong id="ovPhotoCount">0</strong>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <!-- Guide: daily agenda from Map stops + Todos -->
+              <div class="trip-pane" id="pane-guide">
+                <div class="panel guide-panel">
+                  <div class="panel-head">
+                    <div>
+                      <p class="eyebrow" data-i18n="guide.eyebrow">按日整理</p>
+                      <h3 data-i18n="guide.title">旅行攻略</h3>
+                    </div>
+                    <p class="hint" data-i18n="guide.syncHint">与地图路线、待办、日历同步显示同一天的事项。</p>
+                  </div>
+                  <div id="guideDayList" class="guide-day-list"></div>
+                  <p class="empty" id="guideEmpty" data-i18n="guide.empty">还没有行程内容。先去地图添加地点，或在待办里安排任务。</p>
+                </div>
+              </div>
+
+              <!-- Map: daily route planner (Google Maps + itinerary list) -->
+              <div class="trip-pane" id="pane-map">
+                <div class="route-planner">
+                  <div class="route-map-pane">
+                    <div id="routeMap" class="route-map" role="application" aria-label="Trip map"></div>
+                    <div class="route-map-search">
+                      <input type="search" id="routeMapSearchInput" data-i18n-placeholder="map.searchPlaceholder" placeholder="搜索地点，例如：清迈古城">
+                      <button type="button" class="btn primary" id="routeMapSearchBtn" data-i18n="map.search">搜索</button>
+                      <div class="route-search-results" id="routeMapSearchResults" hidden></div>
+                    </div>
+                    <div class="route-map-actions">
+                      <button type="button" class="btn" id="routeEditToggle" data-i18n="map.editRoute">编辑路线</button>
+                      <button type="button" class="btn primary" id="routeDoneEdit" hidden data-i18n="map.done">完成</button>
+                    </div>
+                    <p class="route-pick-banner" id="routePickBanner" hidden data-i18n="map.pickHint">点击地图选择位置</p>
+                    <p class="route-line-note" id="routeLineNote" data-i18n="map.orderLineNote">当前为地点顺序连线，非实际导航路线</p>
+                  </div>
+
+                  <aside class="route-side-panel">
+                    <div class="route-sheet-handle" aria-hidden="true"></div>
+                    <div class="route-date-tabs" id="routeDateTabs" role="tablist"></div>
+
+                    <div class="route-panel-toolbar">
+                      <div>
+                        <p class="eyebrow" data-i18n="map.dayRoute">当日路线</p>
+                        <h3 id="routeDayTitle"></h3>
+                      </div>
+                      <div class="route-toolbar-actions">
+                        <button type="button" class="btn primary" id="routeAddPlaceBtn" data-i18n="map.addPlace">添加地点</button>
+                        <label class="route-hide-toggle">
+                          <input type="checkbox" id="routeHideUnplanned">
+                          <span data-i18n="map.hideUnplanned">隐藏待规划</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div id="routeItineraryList" class="route-itinerary-list"></div>
+                    <p class="empty" id="routeEmpty" data-i18n="map.noStops">这一天还没有安排地点。</p>
+
+                    <div class="route-day-todos" id="routeDayTodosWrap">
+                      <div class="panel-head">
+                        <h4 data-i18n="map.dayTodos">当天待办</h4>
+                        <button type="button" class="btn small" id="routeOpenTodoBtn" data-i18n="tab.todo">待办</button>
+                      </div>
+                      <div id="routeDayTodoList" class="route-day-todo-list"></div>
+                      <p class="empty" id="routeDayTodoEmpty" data-i18n="msg.noDayTodos">这一天没有任务。</p>
+                    </div>
+
+                    <div class="route-unplanned" id="routeUnplannedWrap">
+                      <div class="panel-head">
+                        <h4 data-i18n="map.unplanned">待规划地点</h4>
+                      </div>
+                      <div id="routeUnplannedList" class="route-unplanned-list"></div>
+                      <p class="empty" id="routeUnplannedEmpty" data-i18n="map.noUnplanned">没有待规划地点。</p>
+                    </div>
+                  </aside>
+                </div>
+              </div>
+
+              <!-- Place / stop detail modal -->
+              <div class="route-modal" id="routePlaceModal" hidden>
+                <div class="route-modal-backdrop" id="routeModalBackdrop"></div>
+                <div class="route-modal-card" role="dialog" aria-modal="true">
+                  <div class="route-modal-head">
+                    <h3 id="routeModalTitle" data-i18n="map.placeDetail">地点详情</h3>
+                    <button type="button" class="btn" id="routeModalClose" data-i18n="btn.cancel">取消</button>
+                  </div>
+                  <form id="routePlaceForm" class="form">
+                    <input type="hidden" id="routeFormPlaceId">
+                    <input type="hidden" id="routeFormItemId">
+                    <label>
+                      <span data-i18n="label.placeName">地点名称</span>
+                      <input type="text" id="routeFormName" required>
+                    </label>
+                    <div class="route-locate-box">
+                      <label>
+                        <span data-i18n="map.searchLocation">搜索定位</span>
+                        <input type="search" id="routeFormSearch" data-i18n-placeholder="map.searchPlaceholder" placeholder="搜索地点，例如：清迈古城">
+                      </label>
+                      <div class="route-locate-actions">
+                        <button type="button" class="btn primary" id="routeFormSearchBtn" data-i18n="map.search">搜索</button>
+                        <button type="button" class="btn" id="routePickOnMapBtn" data-i18n="map.pickOnMap">在地图上选点</button>
+                      </div>
+                      <div class="route-search-results is-form" id="routeFormSearchResults" hidden></div>
+                      <p class="hint" data-i18n="map.locateHint">可用搜索找到地点，或点「在地图上选点」后点击地图。</p>
+                    </div>
+                    <label>
+                      <span data-i18n="label.category">分类</span>
+                      <select id="routeFormCategory">
+                        <option value="attraction" data-i18n="place.attraction">景点</option>
+                        <option value="food" data-i18n="place.food">美食</option>
+                        <option value="cafe" data-i18n="place.cafe">咖啡店</option>
+                        <option value="shopping" data-i18n="place.shopping">购物</option>
+                        <option value="hotel" data-i18n="place.hotel">酒店</option>
+                        <option value="photoSpot" data-i18n="place.photoSpot">拍照地点</option>
+                        <option value="other" data-i18n="place.other">其他</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span data-i18n="label.address">地址 / 位置说明</span>
+                      <input type="text" id="routeFormAddress">
+                    </label>
+                    <div class="form-row">
+                      <label>
+                        <span data-i18n="map.latitude">纬度</span>
+                        <input type="number" step="any" id="routeFormLat">
+                      </label>
+                      <label>
+                        <span data-i18n="map.longitude">经度</span>
+                        <input type="number" step="any" id="routeFormLng">
+                      </label>
+                    </div>
+                    <div class="form-row">
+                      <label>
+                        <span data-i18n="map.plannedDate">计划日期</span>
+                        <input type="date" id="routeFormDate">
+                      </label>
+                      <label>
+                        <span data-i18n="map.plannedTime">计划时间</span>
+                        <input type="time" id="routeFormTime">
+                      </label>
+                    </div>
+                    <label>
+                      <span data-i18n="map.imageUrl">图片链接</span>
+                      <input type="text" id="routeFormImage" data-i18n-placeholder="ph.imageUrl">
+                    </label>
+                    <label>
+                      <span data-i18n="label.note">备注</span>
+                      <textarea id="routeFormNote" rows="3"></textarea>
+                    </label>
+                    <label class="route-visited-check">
+                      <input type="checkbox" id="routeFormVisited">
+                      <span data-i18n="map.visited">已游玩</span>
+                    </label>
+                    <div class="form-actions route-modal-actions">
+                      <button type="submit" class="btn primary" data-i18n="btn.save">保存</button>
+                      <button type="button" class="btn" id="routeMoveDayBtn" data-i18n="map.moveDay">移到其他日期</button>
+                      <button type="button" class="btn danger" id="routeRemoveStopBtn" data-i18n="map.removeFromRoute">从路线移除</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Pick saved place to add to route -->
+              <div class="route-modal" id="routePickModal" hidden>
+                <div class="route-modal-backdrop" id="routePickBackdrop"></div>
+                <div class="route-modal-card" role="dialog" aria-modal="true">
+                  <div class="route-modal-head">
+                    <h3 data-i18n="map.addToRoute">加入当日路线</h3>
+                    <button type="button" class="btn" id="routePickClose" data-i18n="btn.cancel">取消</button>
+                  </div>
+                  <p class="hint" data-i18n="map.addToRouteHint">选择一个已保存地点，或新建地点。</p>
+                  <div id="routePickList" class="route-pick-list"></div>
+                  <div class="form-actions">
+                    <button type="button" class="btn primary" id="routeCreatePlaceBtn" data-i18n="map.createPlace">新建地点</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Todo -->
+              <div class="trip-pane" id="pane-todo">
+                <div class="panel">
+                  <div class="panel-head">
+                    <h3 data-i18n="tab.todo">待办</h3>
+                    <p class="hint" data-i18n="todo.syncHint">待办与日历共用同一份数据，修改会即时同步。</p>
+                  </div>
+                  <form id="todoForm" class="form form-inline todo-form">
+                    <input type="hidden" id="todoId">
+                    <label>
+                      <span data-i18n="label.todoTitle">任务名称</span>
+                      <input type="text" id="todoTitle" required data-i18n-placeholder="ph.todoTitle">
+                    </label>
+                    <label>
+                      <span data-i18n="label.dueDate">截止日期</span>
+                      <input type="date" id="todoDue">
+                    </label>
+                    <label>
+                      <span data-i18n="label.priority">优先级</span>
+                      <select id="todoPriority">
+                        <option value="high" data-i18n="priority.high">高</option>
+                        <option value="medium" selected data-i18n="priority.medium">中</option>
+                        <option value="low" data-i18n="priority.low">低</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span data-i18n="label.todoCategory">任务类型</span>
+                      <select id="todoCategory">
+                        <option value="booking" data-i18n="todo.booking">预订</option>
+                        <option value="documents" data-i18n="todo.documents">证件</option>
+                        <option value="packing" data-i18n="todo.packing">行李打包</option>
+                        <option value="shopping" data-i18n="todo.shopping">购物</option>
+                        <option value="during" data-i18n="todo.during">旅行途中</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span data-i18n="label.tripDay">行程日</span>
+                      <select id="todoTripDay">
+                        <option value="" data-i18n="todo.noTripDay">不指定</option>
+                      </select>
+                    </label>
+                    <label class="todo-note-field">
+                      <span data-i18n="label.todoNote">备注</span>
+                      <input type="text" id="todoNote" data-i18n-placeholder="ph.todoNote">
+                    </label>
+                    <div class="form-actions">
+                      <button type="submit" class="btn primary" id="todoSubmitBtn" data-i18n="btn.addTodo">添加待办</button>
+                      <button type="button" class="btn" id="todoFormReset" data-i18n="btn.cancel">取消</button>
+                    </div>
+                  </form>
+                  <div id="todoList" class="list"></div>
+                  <p class="empty" id="todoEmpty" data-i18n="msg.noTodos">还没有待办任务。</p>
+                </div>
+              </div>
+
+              <!-- Calendar: reads the same todo list -->
+              <div class="trip-pane" id="pane-calendar">
+                <div class="grid-2">
+                  <div class="panel">
+                    <div class="panel-head calendar-head">
+                      <button type="button" class="btn" id="prevMonth" data-i18n="btn.prevMonth">上个月</button>
+                      <h3 id="calendarTitle">2026-07</h3>
+                      <div class="calendar-nav-right">
+                        <button type="button" class="btn" id="todayMonth" data-i18n="btn.today">今天</button>
+                        <button type="button" class="btn" id="nextMonth" data-i18n="btn.nextMonth">下个月</button>
+                      </div>
+                    </div>
+                    <div class="calendar" id="calendar"></div>
+                  </div>
+                  <div class="panel">
+                    <div class="panel-head">
+                      <h3 data-i18n="label.dayAgenda">当天行程</h3>
+                      <span class="chip" id="selectedDateLabel" data-i18n="label.today">今天</span>
+                    </div>
+                    <div id="dayTodoList" class="list"></div>
+                    <p class="empty" id="dayTodoEmpty" data-i18n="msg.noDayAgenda">这一天还没有地点或待办。</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Favorites: local snapshots of places and AI Q&A -->
+              <div class="trip-pane" id="pane-favorites">
+                <section class="panel favorites-panel">
+                  <div class="panel-head favorites-head">
+                    <div>
+                      <p class="eyebrow">本机保存</p>
+                      <h3>我的收藏</h3>
+                    </div>
+                    <button type="button" class="btn danger" id="clearFavoritesBtn">清空全部</button>
+                  </div>
+                  <div id="favoritesList" class="favorites-list"></div>
+                  <p class="empty" id="favoritesEmpty">还没有收藏任何景点或 AI 提问</p>
+                </section>
+              </div>
+
+              <!-- Notes placeholder -->
+              <div class="trip-pane" id="pane-notes">
+                <div class="panel placeholder-panel">
+                  <img src="images/icons/notes.png" alt="" class="placeholder-icon">
+                  <h3 data-i18n="placeholder.notesTitle">笔记即将到来</h3>
+                  <p data-i18n="placeholder.notesDesc">旅行随笔会在这里记录。示例数据仍会显示在概览预览中。</p>
+                </div>
+              </div>
+
+              <!-- Gallery placeholder -->
+              <div class="trip-pane" id="pane-gallery">
+                <div class="panel placeholder-panel">
+                  <img src="images/icons/photos.png" alt="" class="placeholder-icon">
+                  <h3 data-i18n="placeholder.galleryTitle">相册即将到来</h3>
+                  <p data-i18n="placeholder.galleryDesc">照片墙会在下一阶段完成。概览里可以先看到照片数量。</p>
+                </div>
+              </div>
+
+              <!-- AI assistant -->
+              <div class="trip-pane" id="pane-ai">
+                <div class="panel ai-panel">
+                  <div class="panel-head ai-panel-head">
+                    <div>
+                      <h3 data-i18n="tab.ai">AI 助手</h3>
+                      <p class="hint" id="aiHint" data-i18n="ai.hint">先选偏好与节奏，再生成行程；也可直接提问。生成结果会写入地图与待办。</p>
+                    </div>
+                    <div class="ai-head-actions">
+                      <button type="button" class="btn small" id="aiSettingsBtn" data-i18n="ai.settings">AI 设置</button>
+                      <span class="ai-badge" id="aiBadge">…</span>
+                    </div>
+                  </div>
+                  <p class="ai-source-line" id="aiSourceLine" data-i18n="ai.sourceUnknown">来源：检测中…</p>
+
+                  <div class="ai-catalog" id="aiCatalog">
+                    <div class="ai-catalog-row">
+                      <div class="ai-catalog-field">
+                        <span data-i18n="ai.destLabel">目的地</span>
+                        <strong id="aiCatalogDestination">—</strong>
+                      </div>
+                      <div class="ai-catalog-field">
+                        <span data-i18n="ai.daysLabel">天数</span>
+                        <strong id="aiCatalogDays">—</strong>
+                      </div>
+                    </div>
+                    <fieldset class="ai-pref-field">
+                      <legend data-i18n="ai.prefLabel">偏好（可多选）</legend>
+                      <div class="ai-chip-group" id="aiPreferenceChips">
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="咖啡馆" checked>咖啡馆</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="寺庙">寺庙</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="夜市" checked>夜市</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="运动">运动</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="自然">自然</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="吃饭" checked>吃饭</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="购物">购物</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="博物馆">博物馆</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="海边">海边</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="徒步">徒步</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="温泉">温泉</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="拍照">拍照</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="亲子">亲子</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="夜生活">夜生活</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="历史古迹">历史古迹</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="艺术展览">艺术展览</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="动物乐园">动物乐园</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="主题乐园">主题乐园</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="当地市集">当地市集</label>
+                        <label class="ai-chip"><input type="checkbox" name="ai-pref" value="甜品">甜品</label>
+                      </div>
+                      <div class="ai-pref-custom">
+                        <input
+                          id="aiCustomPrefInput"
+                          type="text"
+                          maxlength="20"
+                          autocomplete="off"
+                          data-i18n-placeholder="ai.customPrefPlaceholder"
+                          placeholder="自定义偏好，如：手作工坊"
+                        >
+                        <button type="button" class="btn small" id="aiCustomPrefAdd" data-i18n="ai.customPrefAdd">添加</button>
+                      </div>
+                    </fieldset>
+                    <label class="ai-catalog-field ai-pace-field">
+                      <span data-i18n="ai.paceLabel">节奏</span>
+                      <select id="aiPaceSelect">
+                        <option value="躺平">躺平</option>
+                        <option value="均衡" selected>均衡</option>
+                        <option value="特种兵">特种兵</option>
+                        <option value="随机">随机</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div class="ai-actions">
+                    <button type="button" class="btn primary" id="aiPlanBtn" data-i18n="ai.generate">AI 生成行程</button>
+                  </div>
+
+                  <article class="ai-advice-card" id="aiAdviceCard" hidden>
+                    <div class="ai-advice-meta">
+                      <span data-i18n="ai.sourcePrefix">来源</span>
+                      <span class="ai-advice-badge" id="aiAdviceSource"></span>
+                    </div>
+                    <h4 data-i18n="ai.adviceSummary">行程总览</h4>
+                    <p id="aiAdviceSummary"></p>
+                    <h4 data-i18n="ai.adviceHighlights">亮点</h4>
+                    <ul id="aiAdviceHighlights"></ul>
+                    <h4 data-i18n="ai.adviceItinerary">日程安排</h4>
+                    <ol id="aiAdviceItinerary"></ol>
+                    <h4 data-i18n="ai.adviceReminder">提醒</h4>
+                    <p id="aiAdviceReminder" class="ai-advice-reminder"></p>
+                  </article>
+
+                  <div class="chat-log" id="aiChatLog" role="log" aria-live="polite"></div>
+                  <form class="chat-form" id="aiChatForm">
+                    <input
+                      id="aiChatInput"
+                      type="text"
+                      maxlength="200"
+                      autocomplete="off"
+                      data-i18n-placeholder="ai.placeholder"
+                      placeholder="例如：第二天怎么安排？下雨天去哪？"
+                      required
+                    >
+                    <button type="submit" class="btn primary" id="aiChatSend" data-i18n="ai.send">发送</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <dialog class="ai-settings-dialog" id="aiSettingsDialog">
+    <form method="dialog" id="aiSettingsForm" class="ai-settings-form">
+      <header>
+        <h3 data-i18n="ai.settingsTitle">AI 设置</h3>
+        <p data-i18n="ai.settingsDesc">支持 OpenAI 兼容接口。密钥可保存在本机，或写入项目 .env。</p>
+      </header>
+      <label>
+        <span>API Key</span>
+        <input id="aiSettingApiKey" type="password" placeholder="sk-..." autocomplete="off">
+      </label>
+      <label>
+        <span>Base URL</span>
+        <input id="aiSettingBaseUrl" type="url" placeholder="https://api.deepseek.com/v1">
+      </label>
+      <label>
+        <span>Model</span>
+        <input id="aiSettingModel" type="text" placeholder="deepseek-chat">
+      </label>
+      <p class="hint" data-i18n="ai.settingsNote">推荐：复制 .env.example 为 .env，填写 AI_API_KEY 后执行 npm start（端口 3002）。</p>
+      <div class="form-actions">
+        <button type="submit" class="btn" value="cancel" data-i18n="btn.cancel">取消</button>
+        <button type="submit" class="btn primary" value="save" data-i18n="btn.save">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="languages/zh.js"></script>
+  <script src="languages/en.js"></script>
+  <script src="storage.js"></script>
+  <script src="i18n.js"></script>
+  <script src="maps-loader.js"></script>
+  <script src="map-route.js"></script>
+  <script src="ai.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

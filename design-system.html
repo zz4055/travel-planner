@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design System — Travel Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-tokens.css">
+  <link rel="stylesheet" href="design-system.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      color: var(--color-text);
+      background:
+        radial-gradient(ellipse 70% 45% at 8% -8%, rgba(136, 208, 232, 0.22), transparent 55%),
+        radial-gradient(ellipse 55% 40% at 100% 0%, rgba(240, 152, 160, 0.14), transparent 50%),
+        linear-gradient(180deg, #eef8f4 0%, #fbfcf9 45%, #f7faf8 100%);
+    }
+
+    .ds-shell {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: var(--space-7) var(--space-5) var(--space-10);
+    }
+
+    .ds-hero {
+      margin-bottom: var(--space-7);
+    }
+
+    .ds-hero h1 {
+      margin: 0;
+      font-size: var(--text-3xl);
+      letter-spacing: var(--tracking-tight);
+    }
+
+    .ds-hero p {
+      margin: var(--space-3) 0 0;
+      max-width: 640px;
+      color: var(--color-text-secondary);
+      line-height: var(--leading-normal);
+    }
+
+    .ds-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin: var(--space-5) 0 var(--space-7);
+    }
+
+    .ds-nav a {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--color-border);
+    }
+
+    .ds-nav a:hover {
+      color: var(--color-text);
+      border-color: var(--color-text);
+    }
+
+    .ds-block {
+      margin-bottom: var(--space-8);
+    }
+
+    .ds-block > h2 {
+      margin: 0 0 var(--space-4);
+      font-size: var(--text-xl);
+    }
+
+    .ds-swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: var(--space-3);
+    }
+
+    .ds-swatch {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+      background: #fff;
+    }
+
+    .ds-swatch__color {
+      height: 72px;
+    }
+
+    .ds-swatch__meta {
+      padding: var(--space-3);
+      font-size: var(--text-xs);
+    }
+
+    .ds-swatch__meta strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: var(--text-sm);
+    }
+
+    .token-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+      font-size: var(--text-sm);
+    }
+
+    .token-table th,
+    .token-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .token-table th {
+      background: var(--color-surface-sunken);
+      font-weight: 700;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      background: var(--color-surface-sunken);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .demo-panel {
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-5);
+    }
+  </style>
+</head>
+<body>
+  <div class="ds-shell">
+    <header class="ds-hero">
+      <p class="ui-eyebrow">Travel Planner · Design System</p>
+      <h1>UI Foundation</h1>
+      <p>
+        Clean, warm, minimal components for every future page.
+        Use <code>design-tokens.css</code> + <code>design-system.css</code>.
+        Prefer <code>.ui-*</code> classes. Do not invent one-off styles for new screens.
+      </p>
+      <p><a href="index.html">← Back to app</a></p>
+    </header>
+
+    <nav class="ds-nav">
+      <a href="#tokens">Tokens</a>
+      <a href="#buttons">Buttons</a>
+      <a href="#cards">Cards</a>
+      <a href="#forms">Forms</a>
+      <a href="#headers">Headers</a>
+      <a href="#empty">Empty</a>
+      <a href="#tags">Tags</a>
+      <a href="#nav">Navigation</a>
+      <a href="#travel">Travel</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#todo">Todo</a>
+      <a href="#calendar">Calendar</a>
+      <a href="#progress">Progress</a>
+      <a href="#modal">Modal</a>
+      <a href="#fab">FAB</a>
+    </nav>
+
+    <section class="ds-block" id="tokens">
+      <h2>Color tokens</h2>
+      <div class="ds-swatches">
+        <div class="ds-swatch"><div class="ds-swatch__color" style="background:#f0a018"></div><div class="ds-swatch__meta"><strong>Brand</strong><code>--color-brand</code></div></div>
+        <div class="ds-swatch"><div class="ds-swatch__color" style="background:#d8f0e8"></div><div class="ds-swatch__meta"><strong>Mint</strong><code>--color-mint</code></div></div>
+        <div class="ds-swatch"><div class="ds-swatch__color" style="background:#88d0e8"></div><div class="ds-swatch__meta"><strong>Sky</strong><code>--color-sky</code></div></div>
+        <div class="ds-swatch"><div class="ds-swatch__color" style="background:#f098a0"></div><div class="ds-swatch__meta"><strong>Pink</strong><code>--color-pink</code></div></div>
+        <div class="ds-swatch"><div class="ds-swatch__color" style="background:#f8f8e8"></div><div class="ds-swatch__meta"><strong>Cream</strong><code>--color-cream</code></div></div>
+        <div class="ds-swatch"><div class="ds-swatch__color" style="background:#1a2a26"></div><div class="ds-swatch__meta"><strong>Text</strong><code>--color-text</code></div></div>
+      </div>
+      <div style="height:16px"></div>
+      <table class="token-table">
+        <thead>
+          <tr><th>Category</th><th>Examples</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Spacing</td><td><code>--space-1</code> … <code>--space-10</code> (4px scale)</td></tr>
+          <tr><td>Radius</td><td><code>--radius-sm</code> <code>--radius-lg</code> <code>--radius-full</code></td></tr>
+          <tr><td>Shadow</td><td><code>--shadow-sm</code> <code>--shadow-md</code> <code>--shadow-offset</code></td></tr>
+          <tr><td>Type</td><td><code>--text-sm</code> <code>--text-2xl</code> <code>--font-sans</code></td></tr>
+          <tr><td>Icons</td><td><code>--icon-sm</code> 20 · <code>--icon-lg</code> 36 · <code>--icon-xl</code> 44</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="ds-block" id="buttons">
+      <h2>Buttons</h2>
+      <div class="demo-panel ui-row">
+        <button type="button" class="ui-btn ui-btn--primary">Primary</button>
+        <button type="button" class="ui-btn ui-btn--secondary">Secondary</button>
+        <button type="button" class="ui-btn ui-btn--ghost">Ghost</button>
+        <button type="button" class="ui-btn ui-btn--danger">Danger</button>
+        <button type="button" class="ui-btn ui-btn--primary ui-btn--sm">Small</button>
+        <button type="button" class="ui-btn ui-btn--primary ui-btn--lg">Large</button>
+      </div>
+    </section>
+
+    <section class="ds-block" id="cards">
+      <h2>Cards</h2>
+      <div class="ui-grid-2">
+        <article class="ui-card">
+          <div class="ui-card__header">
+            <h3 class="ui-card__title">Default card</h3>
+          </div>
+          <div class="ui-card__body">Soft surface, rounded corners, light shadow. Use for sections.</div>
+        </article>
+        <article class="ui-card ui-card--interactive">
+          <div class="ui-card__header">
+            <h3 class="ui-card__title">Interactive card</h3>
+          </div>
+          <div class="ui-card__body">Hover lifts slightly. Use for clickable summaries.</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="ds-block" id="forms">
+      <h2>Inputs & search</h2>
+      <div class="demo-panel ui-stack">
+        <label class="ui-field">
+          <span class="ui-label">Trip name</span>
+          <input class="ui-input" type="text" placeholder="Kyoto 5-day trip">
+        </label>
+        <label class="ui-field">
+          <span class="ui-label">Notes</span>
+          <textarea class="ui-textarea" placeholder="Write something warm and short…"></textarea>
+        </label>
+        <div class="ui-search">
+          <img class="ui-search__icon" src="images/icons/map.png" alt="">
+          <input class="ui-search__input" type="search" placeholder="Search places, todos, notes…">
+        </div>
+      </div>
+    </section>
+
+    <section class="ds-block" id="headers">
+      <h2>Page title & section header</h2>
+      <div class="demo-panel">
+        <div class="ui-page-header">
+          <div>
+            <p class="ui-eyebrow">Your travel journal</p>
+            <h2 class="ui-page-title">Home</h2>
+            <p class="ui-page-subtitle">Plan before you go. Record on the road. Remember after.</p>
+          </div>
+          <button type="button" class="ui-btn ui-btn--primary">Create Trip</button>
+        </div>
+        <div class="ui-section-header">
+          <h3 class="ui-section-title">Today’s schedule</h3>
+          <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm">View all</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="ds-block" id="empty">
+      <h2>Empty state</h2>
+      <div class="ui-empty">
+        <img class="ui-empty__icon" src="images/icons/trips.png" alt="">
+        <h3 class="ui-empty__title">No trips yet</h3>
+        <p class="ui-empty__text">Create your first journey and start collecting places, notes, and memories.</p>
+        <button type="button" class="ui-btn ui-btn--primary">Create Trip</button>
+      </div>
+    </section>
+
+    <section class="ds-block" id="tags">
+      <h2>Tags & status chips</h2>
+      <div class="demo-panel ui-row">
+        <span class="ui-tag">Attraction</span>
+        <span class="ui-tag ui-tag--sky">Cafe</span>
+        <span class="ui-tag ui-tag--pink">Food</span>
+        <span class="ui-tag ui-tag--orange">Booking</span>
+        <span class="ui-tag ui-tag--priority-high">High</span>
+        <span class="ui-tag ui-tag--priority-medium">Medium</span>
+        <span class="ui-tag ui-tag--priority-low">Low</span>
+        <span class="ui-tag ui-tag--success">Completed</span>
+        <span class="ui-status ui-status--upcoming">Upcoming</span>
+        <span class="ui-status ui-status--in-progress">In Progress</span>
+        <span class="ui-status ui-status--completed">Completed</span>
+      </div>
+    </section>
+
+    <section class="ds-block" id="nav">
+      <h2>Navigation items</h2>
+      <div class="demo-panel" style="max-width:280px">
+        <nav class="ui-nav">
+          <button type="button" class="ui-nav__item is-active">
+            <img class="ui-nav__icon" src="images/icons/home.png" alt="">
+            <span>Home</span>
+          </button>
+          <button type="button" class="ui-nav__item">
+            <img class="ui-nav__icon" src="images/icons/trips.png" alt="">
+            <span>My Trips</span>
+          </button>
+          <button type="button" class="ui-nav__item">
+            <img class="ui-nav__icon" src="images/icons/notes.png" alt="">
+            <span>Settings</span>
+          </button>
+        </nav>
+      </div>
+    </section>
+
+    <section class="ds-block" id="travel">
+      <h2>Travel cards</h2>
+      <div class="ui-grid-2">
+        <article class="ui-travel-card">
+          <div class="ui-travel-card__cover" style="background-image:url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600')"></div>
+          <div class="ui-travel-card__body">
+            <span class="ui-status ui-status--upcoming">Upcoming</span>
+            <h3 class="ui-travel-card__title">Kyoto 5-Day Trip</h3>
+            <p class="ui-travel-card__meta">Kyoto, Japan</p>
+            <p class="ui-travel-card__meta">2026-08-01 → 2026-08-05</p>
+            <div class="ui-travel-card__actions">
+              <button type="button" class="ui-btn ui-btn--primary ui-btn--sm">Open Trip</button>
+              <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm">Edit</button>
+            </div>
+          </div>
+        </article>
+        <article class="ui-travel-card">
+          <div class="ui-travel-card__cover"></div>
+          <div class="ui-travel-card__body">
+            <span class="ui-status ui-status--completed">Completed</span>
+            <h3 class="ui-travel-card__title">Qingdao Weekend</h3>
+            <p class="ui-travel-card__meta">Qingdao, China</p>
+            <p class="ui-travel-card__meta">2026-05-01 → 2026-05-03</p>
+            <div class="ui-travel-card__actions">
+              <button type="button" class="ui-btn ui-btn--primary ui-btn--sm">Open Trip</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="ds-block" id="timeline">
+      <h2>Timeline cards</h2>
+      <div class="demo-panel">
+        <div class="ui-timeline">
+          <div class="ui-timeline-item">
+            <div class="ui-timeline-item__rail"><span class="ui-timeline-item__dot"></span></div>
+            <article class="ui-timeline-card">
+              <p class="ui-timeline-card__time">09:00</p>
+              <h4 class="ui-timeline-card__title">Kiyomizu-dera</h4>
+              <p class="ui-timeline-card__text">Arrive early, walk the wooden stage, then coffee nearby.</p>
+            </article>
+          </div>
+          <div class="ui-timeline-item">
+            <div class="ui-timeline-item__rail"><span class="ui-timeline-item__dot"></span></div>
+            <article class="ui-timeline-card">
+              <p class="ui-timeline-card__time">13:30</p>
+              <h4 class="ui-timeline-card__title">Ninen-zaka</h4>
+              <p class="ui-timeline-card__text">Slow walk, souvenir shops, soft light for photos.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ds-block" id="todo">
+      <h2>Todo cards</h2>
+      <div class="demo-panel ui-stack">
+        <article class="ui-todo-card">
+          <div class="ui-todo-card__main">
+            <input class="ui-todo-card__check" type="checkbox">
+            <div>
+              <h4 class="ui-todo-card__title">Book hotel</h4>
+              <p class="ui-todo-card__meta">Due 2026-07-20</p>
+              <div class="ui-todo-card__tags">
+                <span class="ui-tag ui-tag--priority-high">High</span>
+                <span class="ui-tag ui-tag--orange">Booking</span>
+              </div>
+            </div>
+          </div>
+          <div class="ui-todo-card__actions">
+            <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm">Edit</button>
+          </div>
+        </article>
+        <article class="ui-todo-card is-done">
+          <div class="ui-todo-card__main">
+            <input class="ui-todo-card__check" type="checkbox" checked>
+            <div>
+              <h4 class="ui-todo-card__title">Check passport</h4>
+              <p class="ui-todo-card__meta">Due 2026-07-15</p>
+              <div class="ui-todo-card__tags">
+                <span class="ui-tag ui-tag--success">Completed</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="ds-block" id="calendar">
+      <h2>Calendar cells</h2>
+      <div class="demo-panel">
+        <div class="ui-calendar" style="max-width:520px">
+          <div class="ui-calendar__weekday">Sun</div>
+          <div class="ui-calendar__weekday">Mon</div>
+          <div class="ui-calendar__weekday">Tue</div>
+          <div class="ui-calendar__weekday">Wed</div>
+          <div class="ui-calendar__weekday">Thu</div>
+          <div class="ui-calendar__weekday">Fri</div>
+          <div class="ui-calendar__weekday">Sat</div>
+          <button type="button" class="ui-calendar__cell is-muted"><span class="ui-calendar__day">29</span></button>
+          <button type="button" class="ui-calendar__cell is-muted"><span class="ui-calendar__day">30</span></button>
+          <button type="button" class="ui-calendar__cell"><span class="ui-calendar__day">1</span></button>
+          <button type="button" class="ui-calendar__cell is-today"><span class="ui-calendar__day">2</span><span class="ui-calendar__event">Book hotel</span></button>
+          <button type="button" class="ui-calendar__cell is-selected"><span class="ui-calendar__day">3</span><span class="ui-calendar__event">Pack</span></button>
+          <button type="button" class="ui-calendar__cell"><span class="ui-calendar__day">4</span></button>
+          <button type="button" class="ui-calendar__cell"><span class="ui-calendar__day">5</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="ds-block" id="progress">
+      <h2>Progress indicators</h2>
+      <div class="demo-panel ui-stack">
+        <div class="ui-progress">
+          <div class="ui-progress__header">
+            <span>Todos done</span>
+            <strong>2/5</strong>
+          </div>
+          <div class="ui-progress__track"><span class="ui-progress__bar" style="width:40%"></span></div>
+        </div>
+        <div class="ui-stat-grid">
+          <div class="ui-stat"><span class="ui-stat__label">Places</span><strong class="ui-stat__value">8</strong></div>
+          <div class="ui-stat"><span class="ui-stat__label">Notes</span><strong class="ui-stat__value">3</strong></div>
+          <div class="ui-stat"><span class="ui-stat__label">Photos</span><strong class="ui-stat__value">12</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ds-block" id="modal">
+      <h2>Modal</h2>
+      <div class="demo-panel">
+        <button type="button" class="ui-btn ui-btn--secondary" id="openModalDemo">Open modal demo</button>
+      </div>
+    </section>
+
+    <section class="ds-block" id="fab">
+      <h2>Floating action button</h2>
+      <div class="demo-panel ui-row">
+        <p class="ui-muted">See the fixed FAB at the bottom-right of this page.</p>
+      </div>
+    </section>
+  </div>
+
+  <button type="button" class="ui-fab" title="Create" aria-label="Create">+</button>
+
+  <div class="ui-modal-backdrop" id="modalDemo" hidden>
+    <div class="ui-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="ui-modal__header">
+        <h3 class="ui-modal__title" id="modalTitle">Create a new trip</h3>
+        <button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" id="closeModalDemo">Close</button>
+      </div>
+      <div class="ui-modal__body">
+        <p>Modals should stay short: one job, clear title, primary + secondary actions.</p>
+        <label class="ui-field" style="margin-top:12px">
+          <span class="ui-label">Destination</span>
+          <input class="ui-input" type="text" placeholder="Where are you going?">
+        </label>
+      </div>
+      <div class="ui-modal__footer">
+        <button type="button" class="ui-btn ui-btn--ghost" id="cancelModalDemo">Cancel</button>
+        <button type="button" class="ui-btn ui-btn--primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var modal = document.getElementById("modalDemo");
+    function openModal() { modal.hidden = false; }
+    function closeModal() { modal.hidden = true; }
+    document.getElementById("openModalDemo").addEventListener("click", openModal);
+    document.getElementById("closeModalDemo").addEventListener("click", closeModal);
+    document.getElementById("cancelModalDemo").addEventListener("click", closeModal);
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) closeModal();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+/* =========================================================
+   Travel App — Design Tokens
+   Visual foundation: warm, clean, minimal (Apple / Notion / Linear)
+   ========================================================= */
+
+:root {
+  /* ---------- Color: surfaces ---------- */
+  --color-bg: #f4f7f5;
+  --color-bg-subtle: #eef3f0;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #f7faf8;
+  --color-overlay: rgba(26, 42, 38, 0.42);
+
+  /* ---------- Color: text ---------- */
+  --color-text: #1a2a26;
+  --color-text-secondary: #4d5f58;
+  --color-text-muted: #8a9791;
+  --color-text-inverse: #ffffff;
+  --color-text-link: #c47a2b;
+
+  /* ---------- Color: borders ---------- */
+  --color-border: #dde8e3;
+  --color-border-strong: #1a2a26;
+  --color-border-subtle: rgba(26, 42, 38, 0.08);
+
+  /* ---------- Color: brand / accent ---------- */
+  --color-brand: #f0a018;
+  --color-brand-hover: #d88900;
+  --color-brand-soft: #fff3d9;
+  --color-brand-glow: rgba(240, 160, 24, 0.28);
+
+  --color-mint: #d8f0e8;
+  --color-sky: #88d0e8;
+  --color-cream: #f8f8e8;
+  --color-pink: #f098a0;
+
+  /* ---------- Color: semantic ---------- */
+  --color-success: #1f9a5b;
+  --color-success-soft: #e8f5ee;
+  --color-warning: #c47a2b;
+  --color-warning-soft: #fff6ea;
+  --color-danger: #e05b5b;
+  --color-danger-soft: #fff1f1;
+  --color-info: #4aa3d8;
+  --color-info-soft: #eaf5fc;
+
+  /* Priority */
+  --color-priority-high: #e05b5b;
+  --color-priority-medium: #c47a2b;
+  --color-priority-low: #4aa3d8;
+
+  /* Status */
+  --color-status-upcoming-bg: #fff3d9;
+  --color-status-progress-bg: #d8f0e8;
+  --color-status-done-bg: #eef1f0;
+
+  /* ---------- Typography ---------- */
+  --font-sans: "Source Sans 3", "Noto Sans SC", "PingFang SC", "Segoe UI", sans-serif;
+  --font-display: "Source Sans 3", "Noto Sans SC", "PingFang SC", sans-serif;
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-3xl: 34px;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.75;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+
+  /* ---------- Spacing scale (4px base) ---------- */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+
+  /* ---------- Radius ---------- */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-2xl: 28px;
+  --radius-full: 999px;
+
+  /* ---------- Shadows ---------- */
+  --shadow-xs: 0 1px 2px rgba(26, 42, 38, 0.04);
+  --shadow-sm: 0 4px 14px rgba(26, 42, 38, 0.04);
+  --shadow-md: 0 12px 28px rgba(26, 42, 38, 0.06);
+  --shadow-lg: 0 20px 40px rgba(26, 42, 38, 0.1);
+  --shadow-offset: 3px 3px 0 rgba(26, 42, 38, 0.12);
+  --shadow-focus: 0 0 0 4px var(--color-brand-glow);
+
+  /* ---------- Borders ---------- */
+  --border-width: 1px;
+  --border-width-strong: 2px;
+  --border-width-heavy: 2.5px;
+
+  /* ---------- Icon sizes ---------- */
+  --icon-xs: 16px;
+  --icon-sm: 20px;
+  --icon-md: 28px;
+  --icon-lg: 36px;
+  --icon-xl: 44px;
+  --icon-2xl: 56px;
+
+  /* ---------- Control sizes ---------- */
+  --control-height-sm: 32px;
+  --control-height-md: 40px;
+  --control-height-lg: 48px;
+
+  /* ---------- Layout ---------- */
+  --sidebar-width: 248px;
+  --content-max: 1100px;
+  --z-sticky: 10;
+  --z-dropdown: 40;
+  --z-modal: 80;
+  --z-fab: 60;
+  --z-toast: 90;
+
+  /* ---------- Motion ---------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* ---------- Legacy aliases (keep existing app classes working) ---------- */
+  --bg: var(--color-bg);
+  --bg-mid: #fbfcf9;
+  --panel: var(--color-surface);
+  --ink: var(--color-text);
+  --ink-soft: var(--color-text-secondary);
+  --muted: var(--color-text-muted);
+  --line: var(--color-border);
+  --mint: var(--color-mint);
+  --sky: var(--color-sky);
+  --cream: var(--color-cream);
+  --pink: var(--color-pink);
+  --orange: var(--color-brand);
+  --accent: var(--color-brand);
+  --accent-deep: var(--color-brand-hover);
+  --accent-soft: var(--color-brand-soft);
+  --accent-glow: var(--color-brand-glow);
+  --secondary: var(--color-sky);
+  --black: var(--color-text);
+  --warn: var(--color-warning);
+  --danger: var(--color-danger);
+  --danger-soft: var(--color-danger-soft);
+  --high: var(--color-priority-high);
+  --medium: var(--color-priority-medium);
+  --low: var(--color-priority-low);
+  --shadow: var(--shadow-md);
+  --shadow-soft: var(--shadow-sm);
+  --radius: var(--radius-xl);
+  /* note: --radius-sm is defined above in the radius scale */
+  --font: var(--font-sans);
+  --display: var(--font-display);
+  --sidebar: var(--sidebar-width);
+  --ease: var(--ease-out);
+  --spring: var(--ease-spring);
+}

@@ -1,0 +1,15 @@
+{
+  "name": "travel-planner-original",
+  "version": "1.0.0",
+  "private": true,
+  "description": "第四节课旅行规划小系统 + AI 助手",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
