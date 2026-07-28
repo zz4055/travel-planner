@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
+const { pool, pingDb } = require("./db");
+
 const app = express();
 const PORT = Number(process.env.PORT) || 3002;
 
@@ -10,12 +12,24 @@ app.use(cors());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(__dirname));
 
+function normalizeAIModel(model) {
+  const raw = String(model || "").trim();
+  // DeepSeek 现仅接受 v4 模型名；旧名做兼容映射，避免前端 LocalStorage 仍写 deepseek-chat 时整站变 Mock
+  if (!raw || raw === "deepseek-chat") {
+    return "deepseek-v4-flash";
+  }
+  if (raw === "deepseek-reasoner") {
+    return "deepseek-v4-pro";
+  }
+  return raw;
+}
+
 function resolveAIConfig(body = {}) {
   const apiKey = (body.apiKey || process.env.AI_API_KEY || "").trim();
   const baseUrl = (body.baseUrl || process.env.AI_BASE_URL || "https://api.deepseek.com/v1")
     .trim()
     .replace(/\/$/, "");
-  const model = (body.model || process.env.AI_MODEL || "deepseek-chat").trim();
+  const model = normalizeAIModel(body.model || process.env.AI_MODEL || "deepseek-v4-flash");
   return { apiKey, baseUrl, model };
 }
 
@@ -178,14 +192,64 @@ function normalizeAdvice(raw) {
   };
 }
 
-app.get("/api/health", (_req, res) => {
+function parseJsonField(value, fallback) {
+  if (value == null) return fallback;
+  if (typeof value === "object") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+async function savePlanRecord({
+  trip,
+  preferences,
+  pace,
+  daysLabel,
+  advice,
+  plan,
+  source,
+  model
+}) {
+  const prefList = Array.isArray(preferences) ? preferences : [];
+  const [result] = await pool.query(
+    `INSERT INTO plan_records
+       (trip_name, destination, start_date, end_date, days_label,
+        preferences_json, pace, advice_json, plan_json, answer_source, model)
+     VALUES (?, ?, ?, ?, ?, CAST(? AS JSON), ?, CAST(? AS JSON), CAST(? AS JSON), ?, ?)`,
+    [
+      String(trip.name || "").slice(0, 120),
+      String(trip.destination || "").slice(0, 80),
+      String(trip.startDate || "").slice(0, 20),
+      String(trip.endDate || "").slice(0, 20),
+      String(daysLabel || "").slice(0, 40),
+      JSON.stringify(prefList),
+      String(pace || "均衡").slice(0, 30),
+      JSON.stringify(advice || {}),
+      JSON.stringify(plan || {}),
+      String(source || "deepseek").slice(0, 20),
+      String(model || "").slice(0, 80)
+    ]
+  );
+  return result.insertId;
+}
+
+app.get("/api/health", async (_req, res) => {
   const { apiKey, baseUrl, model } = resolveAIConfig();
+  let db = false;
+  try {
+    db = await pingDb();
+  } catch (err) {
+    console.warn("[/api/health] db ping failed:", err.message);
+  }
   res.json({
     ok: true,
     configured: Boolean(apiKey),
     baseUrl,
     model,
-    source: apiKey ? (process.env.AI_API_KEY ? "env" : "none") : "none"
+    source: apiKey ? (process.env.AI_API_KEY ? "env" : "none") : "none",
+    db
   });
 });
 
@@ -308,7 +372,25 @@ app.post("/api/plan", async (req, res) => {
       return res.status(502).json({ error: "生成结果为空", code: "EMPTY_PLAN", raw: reply.slice(0, 400) });
     }
 
-    res.json({ plan, advice, model, mode: "live" });
+    let historyId = null;
+    let historySaved = false;
+    try {
+      historyId = await savePlanRecord({
+        trip,
+        preferences: prefList,
+        pace: paceLabel,
+        daysLabel: String(daysLabel || ""),
+        advice,
+        plan,
+        source: "deepseek",
+        model
+      });
+      historySaved = true;
+    } catch (dbErr) {
+      console.error("[/api/plan] save history failed:", dbErr.message);
+    }
+
+    res.json({ plan, advice, model, mode: "live", historyId, historySaved });
   } catch (err) {
     console.error("[/api/plan]", err);
     res.status(err.status || 500).json({
@@ -318,12 +400,64 @@ app.post("/api/plan", async (req, res) => {
   }
 });
 
+app.get("/api/history", async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 5, 1), 50);
+    const [rows] = await pool.query(
+      `SELECT
+         id,
+         trip_name AS tripName,
+         destination,
+         start_date AS startDate,
+         end_date AS endDate,
+         days_label AS daysLabel,
+         preferences_json AS preferences,
+         pace,
+         advice_json AS advice,
+         answer_source AS source,
+         model,
+         created_at AS createdAt
+       FROM plan_records
+       ORDER BY id DESC
+       LIMIT ?`,
+      [limit]
+    );
+
+    const records = rows.map((row) => {
+      const advice = parseJsonField(row.advice, {});
+      return {
+        id: row.id,
+        tripName: row.tripName || "",
+        destination: row.destination || "",
+        startDate: row.startDate || "",
+        endDate: row.endDate || "",
+        daysLabel: row.daysLabel || "",
+        preferences: parseJsonField(row.preferences, []),
+        pace: row.pace || "",
+        summary: advice && advice.summary ? String(advice.summary) : "",
+        source: row.source || "",
+        model: row.model || "",
+        createdAt:
+          row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt
+      };
+    });
+
+    res.json({ records });
+  } catch (err) {
+    console.error("[GET /api/history]", err.message);
+    res.status(500).json({ error: "读取历史失败", detail: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   const hasKey = Boolean((process.env.AI_API_KEY || "").trim());
   console.log(`旅行规划小系统已启动: http://localhost:${PORT}`);
   console.log(
     hasKey
-      ? `AI：已从 .env 读取密钥（${process.env.AI_MODEL || "deepseek-chat"}）`
+      ? `AI：已从 .env 读取密钥（${normalizeAIModel(process.env.AI_MODEL)}）`
       : "AI：未配置 .env 密钥 —— 可复制 .env.example 为 .env 后填写 AI_API_KEY"
+  );
+  console.log(
+    `MySQL：${process.env.DB_HOST || "127.0.0.1"}:${process.env.DB_PORT || 3309}/${process.env.DB_NAME || "travel_planner"}`
   );
 });

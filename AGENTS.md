@@ -8,7 +8,9 @@
 - 默认地址：http://localhost:3002/
 - 前端：`index.html`、`style.css`、`script.js`、`ai.js`、`storage.js` 等
 - 后端：`server.js`（Express），AI 经后端调用，不直连 DeepSeek
-- 本地数据：统一 LocalStorage 键 `travelAppData`（见 `storage.js`）
+- 地图：Google Maps（`maps-loader.js` / `map-route.js`），密钥经 `/api/maps-config` 下发；需在 `.env` 配置 `GOOGLE_MAPS_API_KEY`，并启用 Maps JavaScript API + Directions API + Places API；当天多点用 Directions 画线，失败回退直线顺序连线
+- 本地数据：统一 LocalStorage 键 `travelAppData`（见 `storage.js`）；收藏键 `travelFavorites`
+- MySQL：`docker compose` 起库（默认端口 **3309**），表 `plan_records`；`POST /api/plan` 成功后写入，`GET /api/history` 读取。旅行主数据仍在 LocalStorage，不迁库
 
 ## 开发规则
 

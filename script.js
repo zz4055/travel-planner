@@ -60,8 +60,115 @@
     "journal"
   ];
 
+  /* Destination → Unsplash cover (no API key). Used to auto-fill trip covers. */
+  var DESTINATION_COVERS = [
+    {
+      keys: ["清迈", "chiang mai", "chiangmai", "thailand", "泰国"],
+      url: "https://images.unsplash.com/photo-1528181304800-259b08848526?w=1200&q=80",
+      preset: "chiangmai"
+    },
+    {
+      keys: ["曼谷", "bangkok"],
+      url: "https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=1200&q=80",
+      preset: "sunset"
+    },
+    {
+      keys: ["东京", "tokyo", "東京"],
+      url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200&q=80",
+      preset: "film"
+    },
+    {
+      keys: ["京都", "kyoto"],
+      url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1200&q=80",
+      preset: "minimal"
+    },
+    {
+      keys: ["大阪", "osaka"],
+      url: "https://images.unsplash.com/photo-1590559899731-a382839c3b4d?w=1200&q=80",
+      preset: "sunset"
+    },
+    {
+      keys: ["巴黎", "paris"],
+      url: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80",
+      preset: "film"
+    },
+    {
+      keys: ["纽约", "new york", "nyc"],
+      url: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200&q=80",
+      preset: "map"
+    },
+    {
+      keys: ["首尔", "seoul", "서울"],
+      url: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=1200&q=80",
+      preset: "minimal"
+    },
+    {
+      keys: ["上海", "shanghai"],
+      url: "https://images.unsplash.com/photo-1548919973-5cef591fdadc?w=1200&q=80",
+      preset: "film"
+    },
+    {
+      keys: ["成都", "chengdu"],
+      url: "https://images.unsplash.com/photo-1562602833-20567bbe0903?w=1200&q=80",
+      preset: "forest"
+    },
+    {
+      keys: ["巴厘", "bali"],
+      url: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1200&q=80",
+      preset: "ocean"
+    },
+    {
+      keys: ["新加坡", "singapore"],
+      url: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&q=80",
+      preset: "minimal"
+    },
+    {
+      keys: ["里斯本", "lisbon", "lisboa"],
+      url: "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=1200&q=80",
+      preset: "sunset"
+    },
+    {
+      keys: ["海边", "beach", "island", "马尔代夫", "maldives"],
+      url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80",
+      preset: "ocean"
+    },
+    {
+      keys: ["山", "mountain", "hiking", "alpin"],
+      url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80",
+      preset: "forest"
+    }
+  ];
+
+  var FALLBACK_COVER_POOL = [
+    {
+      url: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80",
+      preset: "map"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80",
+      preset: "sunset"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&q=80",
+      preset: "ocean"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?w=1200&q=80",
+      preset: "film"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80",
+      preset: "forest"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1526772662001-3d23ba4c3c5a?w=1200&q=80",
+      preset: "journal"
+    }
+  ];
+
   var MAX_COVER_FILE_BYTES = 2 * 1024 * 1024;
   var COVER_PREVIEW_MAX_WIDTH = 960;
+  var MAX_GALLERY_PHOTOS_PER_TRIP = 24;
 
   var SUGGEST_KEYS = [
     "suggest.kyoto",
@@ -579,6 +686,105 @@
     };
   }
 
+  function hashString(str) {
+    var text = String(str || "");
+    var hash = 0;
+    for (var i = 0; i < text.length; i += 1) {
+      hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+    }
+    return hash;
+  }
+
+  /**
+   * Pick a cover photo URL from destination keywords (Unsplash, no key).
+   * Same destination tends to get the same image.
+   */
+  function autoCoverForDestination(destination) {
+    var text = String(destination || "")
+      .trim()
+      .toLowerCase();
+    if (!text) {
+      var emptyPick = FALLBACK_COVER_POOL[0];
+      return {
+        coverType: "url",
+        coverImage: emptyPick.url,
+        coverPreset: emptyPick.preset,
+        coverPosition: "center",
+        coverAuto: true
+      };
+    }
+
+    for (var i = 0; i < DESTINATION_COVERS.length; i += 1) {
+      var entry = DESTINATION_COVERS[i];
+      for (var j = 0; j < entry.keys.length; j += 1) {
+        if (text.indexOf(String(entry.keys[j]).toLowerCase()) >= 0) {
+          return {
+            coverType: "url",
+            coverImage: entry.url,
+            coverPreset: entry.preset || "sunset",
+            coverPosition: "center",
+            coverAuto: true
+          };
+        }
+      }
+    }
+
+    var pick = FALLBACK_COVER_POOL[hashString(text) % FALLBACK_COVER_POOL.length];
+    return {
+      coverType: "url",
+      coverImage: pick.url,
+      coverPreset: pick.preset || "sunset",
+      coverPosition: "center",
+      coverAuto: true
+    };
+  }
+
+  function shouldAutoCover(tripOrWizard) {
+    if (!tripOrWizard) {
+      return true;
+    }
+    if (tripOrWizard.coverType === "image" && tripOrWizard.coverImage) {
+      return false;
+    }
+    // Refresh known broken / outdated auto-cover URLs (e.g. dead Unsplash id).
+    var imageUrl = String(tripOrWizard.coverImage || "");
+    if (
+      imageUrl.indexOf("photo-1528183429752-a25d3dd7e5e8") >= 0 ||
+      tripOrWizard.coverAuto
+    ) {
+      return true;
+    }
+    if (tripOrWizard.coverType === "url" && tripOrWizard.coverImage && !tripOrWizard.coverAuto) {
+      return false;
+    }
+    return true;
+  }
+
+  function applyAutoCoverToTrip(trip) {
+    if (!trip || !shouldAutoCover(trip)) {
+      return false;
+    }
+    var auto = autoCoverForDestination(trip.destination || trip.name || "");
+    trip.coverType = auto.coverType;
+    trip.coverImage = auto.coverImage;
+    trip.coverPreset = auto.coverPreset;
+    trip.coverPosition = auto.coverPosition || "center";
+    trip.coverAuto = true;
+    return true;
+  }
+
+  function ensureAutoCoversForTrips() {
+    var changed = false;
+    state.trips.forEach(function (trip) {
+      if (applyAutoCoverToTrip(trip)) {
+        changed = true;
+      }
+    });
+    if (changed) {
+      persistAll();
+    }
+  }
+
   function normalizeTripCover(trip) {
     if (!trip.coverType) {
       if (trip.coverUrl) {
@@ -703,6 +909,167 @@
     reader.readAsDataURL(file);
   }
 
+  function readImageFileAsPreview(file) {
+    return new Promise(function (resolve, reject) {
+      readCoverFileAsPreview(file, resolve, reject);
+    });
+  }
+
+  function getTripPhotos(tripId) {
+    return forTrip(state.photos, tripId).filter(function (photo) {
+      return photo && photo.imageUrl;
+    });
+  }
+
+  function renderGallery() {
+    var grid = document.getElementById("galleryGrid");
+    var empty = document.getElementById("galleryEmpty");
+    var status = document.getElementById("galleryStatus");
+    if (!grid || !empty) {
+      return;
+    }
+
+    var trip = getCurrentTrip();
+    grid.innerHTML = "";
+    if (!trip) {
+      empty.hidden = false;
+      empty.textContent = t("gallery.noTrip");
+      if (status) {
+        status.textContent = "";
+      }
+      return;
+    }
+
+    var photos = getTripPhotos(trip.id).slice().reverse();
+    empty.hidden = photos.length > 0;
+    empty.textContent = t("gallery.empty");
+    if (status) {
+      status.textContent =
+        t("gallery.count", { n: photos.length }) +
+        " · " +
+        t("gallery.limit", { n: MAX_GALLERY_PHOTOS_PER_TRIP });
+    }
+
+    photos.forEach(function (photo) {
+      var card = document.createElement("article");
+      card.className = "gallery-card";
+      var img = document.createElement("img");
+      img.src = photo.imageUrl;
+      img.alt = photo.title || t("tab.gallery");
+      var meta = document.createElement("div");
+      meta.className = "gallery-card-meta";
+      var title = document.createElement("p");
+      title.textContent = photo.title || photo.date || "";
+      meta.appendChild(title);
+      var delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "btn small danger gallery-delete";
+      delBtn.textContent = t("gallery.delete");
+      delBtn.addEventListener("click", function () {
+        deleteGalleryPhoto(photo.id);
+      });
+      card.appendChild(img);
+      card.appendChild(meta);
+      card.appendChild(delBtn);
+      grid.appendChild(card);
+    });
+  }
+
+  function deleteGalleryPhoto(photoId) {
+    if (!photoId) {
+      return;
+    }
+    if (!confirm(t("gallery.confirmDelete"))) {
+      return;
+    }
+    state.photos = state.photos.filter(function (photo) {
+      return photo.id !== photoId;
+    });
+    persistAll();
+    renderGallery();
+    if (state.tripTab === "overview") {
+      renderOverview();
+    }
+  }
+
+  function addGalleryFiles(fileList) {
+    var trip = getCurrentTrip();
+    if (!trip) {
+      alert(t("gallery.noTrip"));
+      return;
+    }
+
+    var files = Array.prototype.slice.call(fileList || []).filter(function (file) {
+      return file && file.type && file.type.indexOf("image/") === 0;
+    });
+    if (!files.length) {
+      alert(t("cover.fileInvalid"));
+      return;
+    }
+
+    var existingCount = getTripPhotos(trip.id).length;
+    var room = Math.max(0, MAX_GALLERY_PHOTOS_PER_TRIP - existingCount);
+    if (!room) {
+      alert(t("gallery.limit", { n: MAX_GALLERY_PHOTOS_PER_TRIP }));
+      return;
+    }
+
+    var toAdd = files.slice(0, room);
+    var status = document.getElementById("galleryStatus");
+    if (status) {
+      status.textContent = t("gallery.uploading");
+    }
+
+    var chain = Promise.resolve();
+    var added = 0;
+    toAdd.forEach(function (file) {
+      chain = chain.then(function () {
+        return readImageFileAsPreview(file).then(function (dataUrl) {
+          state.photos.push({
+            id: uid("photo"),
+            tripId: trip.id,
+            title: (file.name || "").replace(/\.[^.]+$/, "") || t("tab.gallery"),
+            date: todayStr(),
+            location: trip.destination || "",
+            description: "",
+            imageUrl: dataUrl,
+            createdAt: new Date().toISOString()
+          });
+          added += 1;
+        });
+      });
+    });
+
+    chain
+      .then(function () {
+        persistAll();
+        renderGallery();
+        var statusEl = document.getElementById("galleryStatus");
+        if (statusEl) {
+          statusEl.textContent = t("gallery.added", { n: added });
+        }
+        if (files.length > room) {
+          alert(t("gallery.limit", { n: MAX_GALLERY_PHOTOS_PER_TRIP }));
+        }
+      })
+      .catch(function (message) {
+        alert(message || t("cover.fileInvalid"));
+        renderGallery();
+      });
+  }
+
+  function bindGalleryEvents() {
+    var input = document.getElementById("galleryFileInput");
+    if (!input || input.getAttribute("data-bound") === "1") {
+      return;
+    }
+    input.setAttribute("data-bound", "1");
+    input.addEventListener("change", function () {
+      addGalleryFiles(input.files);
+      input.value = "";
+    });
+  }
+
   function coverLabel(cover) {
     if (cover.coverType === "image" && cover.coverImage) {
       return t("cover.typeImage");
@@ -765,6 +1132,7 @@
     state.trips = state.trips.map(function (trip) {
       return normalizeTripCover(trip);
     });
+    ensureAutoCoversForTrips();
 
     // Keep older demos in sync with the Chiang Mai sample trip brief.
     state.trips = state.trips.map(function (trip) {
@@ -780,6 +1148,7 @@
         (trip.name && trip.name.toLowerCase().indexOf("chiang mai") >= 0) ||
         (trip.destination && trip.destination.toLowerCase().indexOf("chiang mai") >= 0)
       ) {
+        var cmAuto = autoCoverForDestination("Chiang Mai, Thailand");
         return Object.assign({}, trip, {
           id: trip.id || "trip_demo_002",
           name: trip.name === "青岛周末" || trip.name === "Chiang Mai Escape" ? "Chiang Mai Trip" : trip.name || "Chiang Mai Trip",
@@ -789,15 +1158,17 @@
               : trip.destination || "Chiang Mai, Thailand",
           startDate: trip.startDate === "2026-05-01" || !trip.startDate ? "2026-07-12" : trip.startDate,
           endDate: trip.endDate === "2026-05-06" || !trip.endDate ? "2026-07-17" : trip.endDate,
-          coverType: trip.coverType || "gradient",
-          coverImage: trip.coverImage || "",
-          coverPreset: trip.coverPreset || "chiangmai",
+          coverType: "url",
+          coverImage: cmAuto.coverImage,
+          coverPreset: "chiangmai",
           coverPosition: trip.coverPosition || "center",
+          coverAuto: true,
           styles: trip.styles && trip.styles.length ? trip.styles : ["food", "culture", "nature"]
         });
       }
       return trip;
     });
+    ensureAutoCoversForTrips();
 
     // Prefer Chiang Mai as the sample current trip when none is selected,
     // or when still pointing at a renamed legacy Chiang Mai demo.
@@ -1141,10 +1512,11 @@
         destination: "Chiang Mai, Thailand",
         startDate: "2026-07-12",
         endDate: "2026-07-17",
-        coverType: "gradient",
-        coverImage: "",
+        coverType: "url",
+        coverImage: autoCoverForDestination("Chiang Mai, Thailand").coverImage,
         coverPreset: "chiangmai",
         coverPosition: "center",
+        coverAuto: true,
         styles: ["food", "culture", "nature", "coffee"],
         guide: "Old City temples, night markets, and a slow cafe morning.",
         summary: "",
@@ -1393,6 +1765,9 @@
     if (tabName === "favorites") {
       renderFavorites();
     }
+    if (tabName === "gallery") {
+      renderGallery();
+    }
     if (tabName === "ai") {
       ensureAiWelcome();
       refreshAiStatus();
@@ -1486,7 +1861,7 @@
 
   function formatAiSourceLabel(mode, model) {
     if (mode === "live") {
-      return t("ai.sourceDeepseek", { model: model || "deepseek-chat" });
+      return t("ai.sourceDeepseek", { model: model || "deepseek-v4-flash" });
     }
     if (mode === "offline") {
       return t("ai.sourceOffline");
@@ -1527,6 +1902,85 @@
       itinerary.appendChild(li);
     });
     document.getElementById("aiAdviceReminder").textContent = advice.reminder || "";
+  }
+
+  function formatHistoryTime(value) {
+    if (!value) {
+      return "";
+    }
+    var date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return String(value);
+    }
+    return date.toLocaleString("zh-CN", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function renderAiHistory(result) {
+    var list = document.getElementById("aiHistoryList");
+    var empty = document.getElementById("aiHistoryEmpty");
+    var status = document.getElementById("aiHistoryStatus");
+    if (!list || !empty || !status) {
+      return;
+    }
+
+    list.innerHTML = "";
+    if (!result || !result.ok) {
+      status.textContent = "历史暂不可用" + (result && result.error ? "：" + result.error : "（请确认 MySQL 已启动）");
+      empty.hidden = true;
+      return;
+    }
+
+    var records = Array.isArray(result.records) ? result.records : [];
+    status.textContent = records.length
+      ? "已从 MySQL 读取最近 " + records.length + " 条"
+      : "MySQL 已连接，暂无记录";
+    empty.hidden = records.length > 0;
+
+    records.forEach(function (record) {
+      var li = document.createElement("li");
+      var title = document.createElement("p");
+      title.className = "ai-history-title";
+      title.textContent =
+        (record.destination || "未命名目的地") +
+        (record.pace ? " · " + record.pace : "");
+      var meta = document.createElement("p");
+      meta.className = "ai-history-meta";
+      meta.textContent = [
+        formatHistoryTime(record.createdAt),
+        record.daysLabel || "",
+        record.source || "",
+        Array.isArray(record.preferences) && record.preferences.length
+          ? record.preferences.slice(0, 3).join("、")
+          : ""
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      li.appendChild(title);
+      li.appendChild(meta);
+      if (record.summary) {
+        var summary = document.createElement("p");
+        summary.className = "ai-history-summary";
+        summary.textContent = record.summary;
+        li.appendChild(summary);
+      }
+      list.appendChild(li);
+    });
+  }
+
+  function refreshAiHistory() {
+    if (!window.TravelAI || typeof window.TravelAI.fetchHistory !== "function") {
+      return;
+    }
+    var status = document.getElementById("aiHistoryStatus");
+    if (status) {
+      status.textContent = "加载中…";
+    }
+    window.TravelAI.fetchHistory(5).then(renderAiHistory);
   }
 
   function appendAiBubble(role, text, extraClass, sourceMeta) {
@@ -1769,10 +2223,16 @@
     var chatSend = document.getElementById("aiChatSend");
     var customPrefInput = document.getElementById("aiCustomPrefInput");
     var customPrefAdd = document.getElementById("aiCustomPrefAdd");
+    var historyRefreshBtn = document.getElementById("aiHistoryRefreshBtn");
 
     if (!settingsBtn || !window.TravelAI) {
       return;
     }
+
+    if (historyRefreshBtn) {
+      historyRefreshBtn.addEventListener("click", refreshAiHistory);
+    }
+    refreshAiHistory();
 
     if (customPrefAdd && customPrefInput) {
       function handleAddCustomPref() {
@@ -1804,7 +2264,7 @@
         window.TravelAI.saveSettings({
           apiKey: document.getElementById("aiSettingApiKey").value.trim(),
           baseUrl: document.getElementById("aiSettingBaseUrl").value.trim() || "https://api.deepseek.com/v1",
-          model: document.getElementById("aiSettingModel").value.trim() || "deepseek-chat"
+          model: document.getElementById("aiSettingModel").value.trim() || "deepseek-v4-flash"
         });
         refreshAiStatus();
         appendAiBubble("ai", t("ai.saved"));
@@ -1850,6 +2310,16 @@
         );
         if (result.mode === "live") {
           setAiStatus("live", result.model || "");
+          refreshAiHistory();
+          if (result.historySaved) {
+            appendAiBubble("ai", "本条规划已写入 MySQL 历史。", "", {
+              label: formatAiSourceLabel(result.mode, result.model)
+            });
+          } else {
+            appendAiBubble("ai", "行程已生成，但历史写入失败（请确认 docker compose 已启动）。", "", {
+              label: formatAiSourceLabel(result.mode, result.model)
+            });
+          }
         } else if (result.mode === "offline") {
           setAiStatus("offline");
         } else {
@@ -2771,6 +3241,8 @@
       btn.addEventListener("click", function () {
         state.wizard.destination = label;
         document.getElementById("wizardDestination").value = label;
+        state.wizard.coverAuto = true;
+        syncWizardAutoCoverPreview();
         renderWizardDestination();
       });
       box.appendChild(btn);
@@ -3059,8 +3531,19 @@
     var coverType = w.coverType || "gradient";
     var coverImage = w.coverImage || "";
     var coverPreset = w.coverPreset || "sunset";
+    var coverPosition = w.coverPosition || "center";
+    var coverAuto = false;
     if (coverType !== "gradient" && !coverImage) {
       coverType = "gradient";
+    }
+    // Auto photo cover unless the user uploaded a local image.
+    if (shouldAutoCover(w)) {
+      var auto = autoCoverForDestination(destination);
+      coverType = auto.coverType;
+      coverImage = auto.coverImage;
+      coverPreset = auto.coverPreset;
+      coverPosition = auto.coverPosition;
+      coverAuto = true;
     }
     var newTrip = {
       id: uid("trip"),
@@ -3071,7 +3554,8 @@
       coverType: coverType,
       coverImage: coverImage,
       coverPreset: coverPreset,
-      coverPosition: w.coverPosition || "center",
+      coverPosition: coverPosition,
+      coverAuto: coverAuto,
       styles: w.styles.slice(),
       guide: "",
       summary: "",
@@ -3081,6 +3565,25 @@
     state.currentTripId = newTrip.id;
     persistAll();
     openTrip(newTrip.id, "overview");
+  }
+
+  function syncWizardAutoCoverPreview() {
+    if (!state.wizard || !shouldAutoCover(state.wizard)) {
+      return;
+    }
+    var dest = (state.wizard.destination || "").trim();
+    if (!dest) {
+      return;
+    }
+    var auto = autoCoverForDestination(dest);
+    state.wizard.coverType = auto.coverType;
+    state.wizard.coverImage = auto.coverImage;
+    state.wizard.coverPreset = auto.coverPreset;
+    state.wizard.coverPosition = auto.coverPosition;
+    state.wizard.coverAuto = true;
+    if (document.getElementById("wizardCoverPicker")) {
+      renderCoverPicker("wizardCoverPicker", state.wizard);
+    }
   }
 
   function bindEvents() {
@@ -3147,6 +3650,9 @@
       }
       if (state.wizardStep < 5) {
         state.wizardStep += 1;
+        if (state.wizardStep === 4) {
+          syncWizardAutoCoverPreview();
+        }
         renderWizard();
       }
     });
@@ -3157,6 +3663,8 @@
 
     document.getElementById("wizardDestination").addEventListener("input", function (event) {
       state.wizard.destination = event.target.value;
+      state.wizard.coverAuto = true;
+      syncWizardAutoCoverPreview();
       renderWizardDestination();
     });
 
@@ -3206,7 +3714,7 @@
             if (coverType !== "gradient" && !coverImage) {
               coverType = "gradient";
             }
-            return Object.assign({}, trip, {
+            var next = Object.assign({}, trip, {
               name: name,
               destination: destination,
               startDate: startDate,
@@ -3214,8 +3722,16 @@
               coverType: coverType,
               coverImage: coverImage,
               coverPreset: coverPreset,
-              coverPosition: editCoverState.coverPosition || "center"
+              coverPosition: editCoverState.coverPosition || "center",
+              coverAuto: editCoverState.coverType === "image" ? false : trip.coverAuto
             });
+            if (
+              shouldAutoCover(next) ||
+              (trip.coverAuto && destination !== trip.destination)
+            ) {
+              applyAutoCoverToTrip(next);
+            }
+            return next;
           }
           return trip;
         });
@@ -3361,6 +3877,7 @@
     });
     bindEvents();
     bindAiEvents();
+    bindGalleryEvents();
     refreshAiStatus();
     showAppView("home");
   }

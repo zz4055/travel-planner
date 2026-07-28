@@ -7,14 +7,20 @@ window.TravelAI = (function () {
   const DEFAULTS = {
     apiKey: "",
     baseUrl: "https://api.deepseek.com/v1",
-    model: "deepseek-chat"
+    model: "deepseek-v4-flash"
   };
 
   function loadSettings() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return { ...DEFAULTS };
-      return { ...DEFAULTS, ...JSON.parse(raw) };
+      const next = { ...DEFAULTS, ...JSON.parse(raw) };
+      if (!next.model || next.model === "deepseek-chat") {
+        next.model = "deepseek-v4-flash";
+      } else if (next.model === "deepseek-reasoner") {
+        next.model = "deepseek-v4-pro";
+      }
+      return next;
     } catch {
       return { ...DEFAULTS };
     }
@@ -40,6 +46,26 @@ window.TravelAI = (function () {
       return await res.json();
     } catch {
       return { ok: false, configured: false, offline: true };
+    }
+  }
+
+  async function fetchHistory(limit = 5) {
+    try {
+      const res = await fetch(`${apiBase()}/api/history?limit=${encodeURIComponent(limit)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return {
+          ok: false,
+          records: [],
+          error: data.error || data.detail || "读取历史失败"
+        };
+      }
+      return {
+        ok: true,
+        records: Array.isArray(data.records) ? data.records : []
+      };
+    } catch {
+      return { ok: false, records: [], error: "未连上本地服务" };
     }
   }
 
@@ -161,7 +187,7 @@ window.TravelAI = (function () {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.reply) {
-        return { mode: "live", reply: data.reply, model: data.model || settings.model || "deepseek-chat" };
+        return { mode: "live", reply: data.reply, model: data.model || settings.model || "deepseek-v4-flash" };
       }
       const mock = mockChat(message, trip);
       if (data.code === "NO_API_KEY") {
@@ -213,7 +239,9 @@ window.TravelAI = (function () {
           mode: "live",
           plan: data.plan,
           advice: data.advice || null,
-          model: data.model || settings.model || "deepseek-chat"
+          model: data.model || settings.model || "deepseek-v4-flash",
+          historyId: data.historyId || null,
+          historySaved: Boolean(data.historySaved)
         };
       }
       const plan = mockPlan(trip, focusDate, options);
@@ -243,6 +271,7 @@ window.TravelAI = (function () {
     loadSettings,
     saveSettings,
     checkHealth,
+    fetchHistory,
     chat,
     generatePlan,
     mockChat,

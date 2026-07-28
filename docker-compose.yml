@@ -1,0 +1,24 @@
+name: travel-planner
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: travel_planner_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: travel_planner
+      MYSQL_USER: travel_planner_user
+      MYSQL_PASSWORD: travel_planner_pass
+    ports:
+      - "3309:3306"
+    volumes:
+      - travel_planner_mysql_data:/var/lib/mysql
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  travel_planner_mysql_data:

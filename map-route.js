@@ -1,7 +1,7 @@
 /* =========================================================
    Trip Map Route Planner
    - Google Maps JavaScript API
-   - Numbered markers + polyline for one travel day
+   - Numbered markers + Directions route for one travel day
    - Itinerary list stays in sync with the map
    - Place search: Google Places first, Nominatim fallback
    ========================================================= */
@@ -11,6 +11,11 @@ var TravelMapRoute = (function () {
   var map = null;
   var markers = [];
   var routeLine = null;
+  var directionsService = null;
+  var directionsRenderer = null;
+  var routeRequestId = 0;
+  var legTravelByOrder = {};
+  var travelMode = "WALKING";
   var markerByItemId = {};
   var selectedDate = "";
   var selectedItemId = "";
@@ -153,6 +158,21 @@ var TravelMapRoute = (function () {
       distanceFromPrevious: km + " km",
       durationFromPrevious: mins + " min"
     };
+  }
+
+  function travelFromPrevious(order) {
+    if (legTravelByOrder[order]) {
+      return legTravelByOrder[order];
+    }
+    return mockTravelFromPrevious(order);
+  }
+
+  function getSelectedTravelMode() {
+    var el = document.getElementById("routeTravelMode");
+    if (el && el.value) {
+      travelMode = el.value;
+    }
+    return travelMode === "DRIVING" ? "DRIVING" : "WALKING";
   }
 
   function mapsReady() {
@@ -660,20 +680,47 @@ var TravelMapRoute = (function () {
     });
   }
 
-  function numberMarkerIcon(order, isActive, isDone) {
+  // Map pin emoji by place.category (matches routeFormCategory options).
+  var CATEGORY_EMOJI = {
+    attraction: "🏞️",
+    food: "🍜",
+    cafe: "☕",
+    shopping: "🛍️",
+    hotel: "🏨",
+    photoSpot: "📷",
+    other: "📍"
+  };
+
+  function categoryEmoji(category) {
+    return CATEGORY_EMOJI[category] || CATEGORY_EMOJI.other;
+  }
+
+  function numberMarkerIcon(order, isActive, isDone, category) {
     var bg = isActive ? "#1a2a26" : isDone ? "#2f6b5c" : "#e4572e";
+    var emoji = categoryEmoji(category);
+    // White bubble with category emoji + small colored order badge.
     var svg =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' +
-      '<circle cx="16" cy="16" r="14" fill="' +
+      '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="48" viewBox="0 0 44 48">' +
+      '<rect x="2" y="2" width="40" height="36" rx="12" fill="#fff" stroke="' +
+      bg +
+      '" stroke-width="2"/>' +
+      '<text x="22" y="26" text-anchor="middle" font-size="18">' +
+      emoji +
+      "</text>" +
+      '<circle cx="34" cy="10" r="9" fill="' +
       bg +
       '" stroke="#fff" stroke-width="2"/>' +
-      '<text x="16" y="21" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="sans-serif">' +
+      '<text x="34" y="14" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">' +
       String(order) +
-      "</text></svg>";
+      "</text>" +
+      '<path d="M18 38 L22 46 L26 38 Z" fill="' +
+      bg +
+      '"/>' +
+      "</svg>";
     return {
       url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
-      scaledSize: new google.maps.Size(32, 32),
-      anchor: new google.maps.Point(16, 16)
+      scaledSize: new google.maps.Size(44, 48),
+      anchor: new google.maps.Point(22, 46)
     };
   }
 
@@ -696,8 +743,7 @@ var TravelMapRoute = (function () {
   }
 
   /*
-   * Phase 1: straight-line polyline between stops (visit order only).
-   * Phase 2: could use Google Directions API for walking/driving paths.
+   * Prefer Google Directions (walking/driving). Fall back to straight order line.
    */
   function drawOrderPolyline(latLngs) {
     if (!map || latLngs.length < 2 || !mapsReady()) {
@@ -714,6 +760,96 @@ var TravelMapRoute = (function () {
     });
   }
 
+  function ensureDirectionsTools() {
+    if (!mapsReady()) {
+      return false;
+    }
+    if (!directionsService) {
+      directionsService = new google.maps.DirectionsService();
+    }
+    if (!directionsRenderer) {
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        preserveViewport: true,
+        polylineOptions: {
+          strokeColor: "#e4572e",
+          strokeOpacity: 0.92,
+          strokeWeight: 5
+        }
+      });
+    }
+    return true;
+  }
+
+  function clearDirectionsRoute() {
+    routeRequestId += 1;
+    legTravelByOrder = {};
+    if (directionsRenderer) {
+      try {
+        directionsRenderer.setDirections({ routes: [] });
+      } catch (err) {
+        // ignore clear errors
+      }
+      directionsRenderer.setMap(null);
+    }
+  }
+
+  function rememberLegTravel(result) {
+    legTravelByOrder = {};
+    if (!result || !result.routes || !result.routes[0] || !result.routes[0].legs) {
+      return;
+    }
+    result.routes[0].legs.forEach(function (leg, index) {
+      // legs[0] = stop1→stop2 → store under order 2
+      legTravelByOrder[index + 2] = {
+        distanceFromPrevious: leg.distance ? leg.distance.text : "",
+        durationFromPrevious: leg.duration ? leg.duration.text : "",
+        isReal: true
+      };
+    });
+  }
+
+  function drawDirectionsRoute(latLngs, onDone) {
+    if (!ensureDirectionsTools() || latLngs.length < 2) {
+      onDone(null);
+      return;
+    }
+
+    var waypoints = latLngs.slice(1, -1).map(function (point) {
+      return { location: point, stopover: true };
+    });
+    // Directions API soft limit: 25 waypoints.
+    if (waypoints.length > 25) {
+      onDone(null);
+      return;
+    }
+
+    var reqId = ++routeRequestId;
+    var mode = getSelectedTravelMode();
+    directionsService.route(
+      {
+        origin: latLngs[0],
+        destination: latLngs[latLngs.length - 1],
+        waypoints: waypoints,
+        optimizeWaypoints: false,
+        travelMode: google.maps.TravelMode[mode] || google.maps.TravelMode.WALKING
+      },
+      function (result, status) {
+        if (reqId !== routeRequestId) {
+          return;
+        }
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          directionsRenderer.setMap(map);
+          directionsRenderer.setDirections(result);
+          rememberLegTravel(result);
+          onDone(result);
+          return;
+        }
+        onDone(null, status);
+      }
+    );
+  }
+
   function clearRouteLayers() {
     markers.forEach(function (marker) {
       marker.setMap(null);
@@ -724,15 +860,25 @@ var TravelMapRoute = (function () {
       routeLine.setMap(null);
       routeLine = null;
     }
+    clearDirectionsRoute();
   }
 
-  function updateRouteLineNote(hasLine) {
+  function updateRouteLineNote(hasLine, kind) {
     var note = document.getElementById("routeLineNote");
     if (!note) {
       return;
     }
     note.hidden = !hasLine;
-    if (hasLine) {
+    if (!hasLine) {
+      return;
+    }
+    if (kind === "loading") {
+      note.textContent = t("map.directionsLoading");
+    } else if (kind === "directions") {
+      note.textContent = t("map.directionsNote");
+    } else if (kind === "fallback") {
+      note.textContent = t("map.directionsFallbackNote");
+    } else {
       note.textContent = t("map.orderLineNote");
     }
   }
@@ -777,8 +923,13 @@ var TravelMapRoute = (function () {
       var marker = new google.maps.Marker({
         position: latLng,
         map: map,
-        icon: numberMarkerIcon(item.order, item.id === selectedItemId, !!item.completed),
-        title: place.name,
+        icon: numberMarkerIcon(
+          item.order,
+          item.id === selectedItemId,
+          !!item.completed,
+          place.category
+        ),
+        title: categoryEmoji(place.category) + " " + place.name,
         zIndex: 100 + (item.order || 0)
       });
       marker.addListener("click", function () {
@@ -791,10 +942,29 @@ var TravelMapRoute = (function () {
       markerByItemId[item.id] = marker;
     });
 
-    // 5. Ordered coordinate array, then polyline 1 → 2 → 3 → …
+    // 5. Prefer Google Directions along visit order; fall back to straight line.
     var latLngs = buildOrderedLatLngs(dayItems);
-    routeLine = drawOrderPolyline(latLngs);
-    updateRouteLineNote(latLngs.length >= 2);
+    if (latLngs.length >= 2) {
+      updateRouteLineNote(true, "loading");
+      drawDirectionsRoute(latLngs, function (result) {
+        if (result) {
+          if (routeLine) {
+            routeLine.setMap(null);
+            routeLine = null;
+          }
+          updateRouteLineNote(true, "directions");
+          renderList();
+        } else {
+          if (directionsRenderer) {
+            directionsRenderer.setMap(null);
+          }
+          routeLine = drawOrderPolyline(latLngs);
+          updateRouteLineNote(true, "fallback");
+        }
+      });
+    } else {
+      updateRouteLineNote(false);
+    }
 
     // 6. Fit map to the visible route / single stop.
     if (latLngs.length === 1) {
@@ -921,18 +1091,31 @@ var TravelMapRoute = (function () {
         ? "<img class='route-stop-thumb' src='" + place.image.replace(/'/g, "") + "' alt=''>"
         : "<div class='route-stop-thumb is-fallback'>" + item.order + "</div>";
 
+      var liveTravel = legTravelByOrder[item.order];
+      var distanceText =
+        (liveTravel && liveTravel.distanceFromPrevious) || item.distanceFromPrevious || "";
+      var durationText =
+        (liveTravel && liveTravel.durationFromPrevious) || item.durationFromPrevious || "";
       var travel =
-        item.distanceFromPrevious || item.durationFromPrevious
+        distanceText || durationText
           ? "<p class='route-stop-travel'>" +
-            [item.distanceFromPrevious, item.durationFromPrevious].filter(Boolean).join(" · ") +
+            [distanceText, durationText].filter(Boolean).join(" · ") +
+            (liveTravel && liveTravel.isReal ? "" : " · " + t("map.mockTravel")) +
             "</p>"
           : index === 0
             ? ""
             : "<p class='route-stop-travel'>" + t("map.mockTravel") + "</p>";
 
       card.innerHTML =
-        "<div class='route-stop-order'>" +
+        "<div class='route-stop-order' title='" +
+        t("place." + (place.category || "other")) +
+        "'>" +
+        "<span class='route-stop-emoji'>" +
+        categoryEmoji(place.category) +
+        "</span>" +
+        "<span class='route-stop-num'>" +
         item.order +
+        "</span>" +
         "</div>" +
         thumb +
         "<div class='route-stop-body'>" +
@@ -1464,8 +1647,8 @@ var TravelMapRoute = (function () {
         var marker = new google.maps.Marker({
           position: latLng,
           map: map,
-          icon: numberMarkerIcon(index + 1, false, false),
-          title: place.name
+          icon: numberMarkerIcon(index + 1, false, false, place.category),
+          title: categoryEmoji(place.category) + " " + place.name
         });
         markers.push(marker);
       });
@@ -1514,6 +1697,15 @@ var TravelMapRoute = (function () {
       renderUnplanned();
       document.getElementById("routeUnplannedWrap").hidden = hideUnplanned;
     });
+    var travelModeEl = document.getElementById("routeTravelMode");
+    if (travelModeEl) {
+      travelModeEl.addEventListener("change", function () {
+        getSelectedTravelMode();
+        if (selectedDate && selectedDate !== "__overview__") {
+          renderDailyRoute(selectedDate);
+        }
+      });
+    }
     document.getElementById("routeModalClose").addEventListener("click", closeDetail);
     document.getElementById("routeModalBackdrop").addEventListener("click", closeDetail);
     document.getElementById("routePlaceForm").addEventListener("submit", savePlaceForm);

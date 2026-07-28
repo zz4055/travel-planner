@@ -1348,6 +1348,72 @@ textarea {
   font-size: 1.8rem;
 }
 
+.gallery-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.gallery-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gallery-upload-btn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.gallery-status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft, #66726c);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.gallery-card {
+  position: relative;
+  border: 1px solid var(--line, #d9d0c3);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.gallery-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: #f3efe7;
+}
+
+.gallery-card .gallery-card-meta {
+  padding: 8px 10px 10px;
+}
+
+.gallery-card .gallery-card-meta p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-soft, #66726c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gallery-card .gallery-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
 .placeholder-panel {
   text-align: center;
   padding: 48px 24px;
@@ -1890,6 +1956,14 @@ body.in-create .sidebar {
   overflow: hidden;
 }
 
+.route-map .leaflet-container {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  font: inherit;
+  z-index: 1;
+}
+
 .route-map-search {
   position: absolute;
   top: 12px;
@@ -2008,6 +2082,30 @@ body.in-create .sidebar {
   z-index: 500;
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: calc(100% - 24px);
+}
+
+.route-travel-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 252, 246, 0.94);
+  border: 1px solid rgba(26, 42, 38, 0.12);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.route-travel-mode select {
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: var(--ink);
+  outline: none;
 }
 
 .route-line-note {
@@ -2420,15 +2518,31 @@ body.in-create .sidebar {
 }
 
 .route-stop-order {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #2f6f5e;
-  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: #fff;
+  border: 1.5px solid #2f6f5e;
+  color: #1a2a26;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 0;
+}
+
+.route-stop-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.route-stop-num {
+  font-size: 10px;
+  color: #2f6f5e;
 }
 
 .route-stop-thumb {
@@ -2651,9 +2765,9 @@ body.in-create .sidebar {
     overflow: hidden;
   }
 
-  /* Google Maps should not steal vertical page scrolling on mobile. */
+  /* Leaflet should not steal vertical page scrolling on mobile. */
   .route-map,
-  .route-map .gm-style {
+  .route-map .leaflet-container {
     touch-action: pan-x pinch-zoom;
   }
 
@@ -2864,6 +2978,66 @@ body.in-create .sidebar {
   border: 1px solid var(--line, #d9d0c3);
   background: #fff;
   font: inherit;
+}
+
+.ai-history-panel {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--line, #d9d0c3);
+  border-radius: 12px;
+  background: #faf8f4;
+}
+
+.ai-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ai-history-head h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.ai-history-status {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--muted, #66726c);
+}
+
+.ai-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ai-history-list li {
+  padding: 8px 10px;
+  border: 1px solid var(--line, #d9d0c3);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.ai-history-list .ai-history-title {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ai-history-list .ai-history-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted, #66726c);
+}
+
+.ai-history-list .ai-history-summary {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .ai-advice-card {

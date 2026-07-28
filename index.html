@@ -473,11 +473,18 @@
                       <div class="route-search-results" id="routeMapSearchResults" hidden></div>
                     </div>
                     <div class="route-map-actions">
+                      <label class="route-travel-mode">
+                        <span data-i18n="map.travelMode">出行方式</span>
+                        <select id="routeTravelMode">
+                          <option value="WALKING" data-i18n="map.modeWalking">步行</option>
+                          <option value="DRIVING" data-i18n="map.modeDriving">驾车</option>
+                        </select>
+                      </label>
                       <button type="button" class="btn" id="routeEditToggle" data-i18n="map.editRoute">编辑路线</button>
                       <button type="button" class="btn primary" id="routeDoneEdit" hidden data-i18n="map.done">完成</button>
                     </div>
                     <p class="route-pick-banner" id="routePickBanner" hidden data-i18n="map.pickHint">点击地图选择位置</p>
-                    <p class="route-line-note" id="routeLineNote" data-i18n="map.orderLineNote">当前为地点顺序连线，非实际导航路线</p>
+                    <p class="route-line-note" id="routeLineNote" data-i18n="map.directionsNote">橙色路线为 Google 导航路径（按当天访问顺序）</p>
                   </div>
 
                   <aside class="route-side-panel">
@@ -725,12 +732,22 @@
                 </div>
               </div>
 
-              <!-- Gallery placeholder -->
+              <!-- Gallery: local photo upload (LocalStorage) -->
               <div class="trip-pane" id="pane-gallery">
-                <div class="panel placeholder-panel">
-                  <img src="images/icons/photos.png" alt="" class="placeholder-icon">
-                  <h3 data-i18n="placeholder.galleryTitle">相册即将到来</h3>
-                  <p data-i18n="placeholder.galleryDesc">照片墙会在下一阶段完成。概览里可以先看到照片数量。</p>
+                <div class="panel gallery-panel">
+                  <div class="panel-head gallery-head">
+                    <div>
+                      <h3 data-i18n="tab.gallery">相册</h3>
+                      <p class="hint" data-i18n="gallery.hint">从本机选择照片，压缩后保存在浏览器本地（适合课堂演示）。</p>
+                    </div>
+                    <label class="btn primary gallery-upload-btn">
+                      <span data-i18n="gallery.upload">上传照片</span>
+                      <input id="galleryFileInput" type="file" accept="image/*" multiple hidden>
+                    </label>
+                  </div>
+                  <p class="gallery-status" id="galleryStatus"></p>
+                  <div class="gallery-grid" id="galleryGrid"></div>
+                  <p class="empty" id="galleryEmpty" data-i18n="gallery.empty">还没有照片，点击上方按钮上传。</p>
                 </div>
               </div>
 
@@ -811,6 +828,16 @@
                     <button type="button" class="btn primary" id="aiPlanBtn" data-i18n="ai.generate">AI 生成行程</button>
                   </div>
 
+                  <section class="ai-history-panel" aria-labelledby="aiHistoryTitle">
+                    <div class="ai-history-head">
+                      <h4 id="aiHistoryTitle">最近规划（MySQL）</h4>
+                      <button type="button" class="btn small" id="aiHistoryRefreshBtn">刷新</button>
+                    </div>
+                    <p class="ai-history-status" id="aiHistoryStatus">加载中…</p>
+                    <ul class="ai-history-list" id="aiHistoryList"></ul>
+                    <p class="empty" id="aiHistoryEmpty" hidden>还没有保存的规划记录。用「AI 生成行程」成功一次后会出现在这里。</p>
+                  </section>
+
                   <article class="ai-advice-card" id="aiAdviceCard" hidden>
                     <div class="ai-advice-meta">
                       <span data-i18n="ai.sourcePrefix">来源</span>
@@ -864,7 +891,7 @@
       </label>
       <label>
         <span>Model</span>
-        <input id="aiSettingModel" type="text" placeholder="deepseek-chat">
+        <input id="aiSettingModel" type="text" placeholder="deepseek-v4-flash">
       </label>
       <p class="hint" data-i18n="ai.settingsNote">推荐：复制 .env.example 为 .env，填写 AI_API_KEY 后执行 npm start（端口 3002）。</p>
       <div class="form-actions">

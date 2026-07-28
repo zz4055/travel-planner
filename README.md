@@ -5,15 +5,41 @@
 
 ---
 
-## 0. 带 AI + Google Maps 启动（推荐）
+## 0. 带 AI + Google Maps + MySQL 启动（推荐）
 
 ```bash
-cd "/Users/katezhang/Documents/ai-course/第四节课/案例/06-旅行规划小系统"
+cd "/Users/katezhang/Documents/ai-course/第九节课练习/旅行规划小系统"
+docker compose up -d
+# 首次（或重建数据卷后）导入表结构：
+docker exec -i travel_planner_mysql mysql -u travel_planner_user -ptravel_planner_pass \
+  -h 127.0.0.1 --default-character-set=utf8mb4 travel_planner < sql/init.sql
 npm install
 npm start
 ```
 
 浏览器打开：http://localhost:3002  
+
+### MySQL（AI 规划历史）
+
+| 项 | 默认值 |
+|---|---|
+| 容器名 | `travel_planner_mysql` |
+| 宿主机端口 | **3309**（避免与第九节课 `旅行规划AI` 的 3308 冲突） |
+| 库名 | `travel_planner` |
+| 表 | `plan_records` |
+
+- `POST /api/plan` 成功后写入一条历史；写库失败不影响行程返回
+- `GET /api/history?limit=5` 供 AI 页「最近规划」展示
+- 旅行 / 地点 / 待办仍在浏览器 LocalStorage，**未迁库**
+- 因本机路径含中文时，init 脚本不挂进容器，需上面那条 `docker exec ... < sql/init.sql` 手动建表
+
+查表示例：
+
+```bash
+docker exec -i travel_planner_mysql mysql -u travel_planner_user -ptravel_planner_pass \
+  -h 127.0.0.1 --default-character-set=utf8mb4 travel_planner \
+  -e "SELECT id, destination, pace, answer_source, created_at FROM plan_records ORDER BY id DESC LIMIT 5;"
+```
 
 ### `.env` 密钥
 
@@ -22,18 +48,17 @@ npm start
 | 变量 | 用途 |
 |------|------|
 | `AI_API_KEY` | DeepSeek / OpenAI 兼容接口（AI 助手） |
-| `GOOGLE_MAPS_API_KEY` | Google Maps 底图与地点搜索 |
+| `GOOGLE_MAPS_API_KEY` | Google Maps JavaScript API（地图）；建议同时启用 Places API（搜索） |
+| `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` | MySQL 连接（默认可不改） |
 
-Google Cloud Console 需启用：
-1. **Maps JavaScript API**（必选）
-2. **Places API**（推荐，搜索更快；否则会回退 Nominatim）
+地图密钥经后端 `/api/maps-config` 下发，**不要**写进前端代码或提交到 Git。
 
-默认端口 **3002**。
+默认网站端口 **3002**。
 
-- AI：进入旅行 → **AI 助手**
-- 地图：进入旅行 → **地图**（需配置 `GOOGLE_MAPS_API_KEY`，否则会显示提示）
+- AI：进入旅行 → **AI 助手**（含最近规划历史）
+- 地图：进入旅行 → **地图**（需配置 `GOOGLE_MAPS_API_KEY`）
 
-也可直接双击打开 `index.html`（无服务时 AI / Google Maps 无法完整工作）。
+也可直接双击打开 `index.html`（无服务时 AI / 地图密钥 / 历史无法完整工作）。
 
 ---
 
@@ -72,12 +97,12 @@ Google Cloud Console 需启用：
    进入某趟旅行后，可在多个子页之间切换：概览、攻略、地图、待办、日历（笔记与相册为预留位）。
 
 3. **地图路线规划（Google Maps）**  
-   - 底图使用 Google Maps JavaScript API（需配置 `GOOGLE_MAPS_API_KEY`）  
+   - 底图与交互使用 Google Maps JavaScript API  
    - 按日期查看当天地点顺序  
-   - 搜索地点（Google Places，失败时回退 Nominatim）、地图选点、加入某天路线  
+   - 搜索地点（Places，失败时回退 Nominatim）、地图选点、加入某天路线  
    - 调整顺序、编辑地点信息  
-   - **地图上的连线表示“计划访问顺序”，不是真实导航路线**  
-   - 路程/时间仅为示意，**不代表真实交通方案**（未按公交、步行、驾车等真实路况计算）
+   - 当天 ≥2 个地点时，用 **Google Directions** 按访问顺序画橙色路线（可选步行/驾车）  
+   - 列表显示路段距离与时间；Directions 失败时回退为直线顺序连线
 
 4. **待办 Todo**  
    为当前旅行添加任务（标题、日期/旅行第几天、优先级、分类、备注），可完成、编辑、删除。
@@ -143,12 +168,12 @@ Google Cloud Console 需启用：
 
 ## 6. 本地运行方式
 
-1. 用电脑打开文件夹：`第四节课/案例/06-旅行规划小系统/`  
-2. 用浏览器打开 `index.html`（推荐 Chrome / Edge）  
-3. 地图底图与搜索需要**联网**，并配置 `GOOGLE_MAPS_API_KEY` 后用 `npm start` 打开  
-4. 未配置 Google Key 时，地图页会显示提示；地点搜索仍可能回退到 Nominatim  
+1. 用电脑打开文件夹：`第九节课练习/旅行规划小系统/`  
+2. 推荐：`npm start` 后打开 http://localhost:3002/（Chrome / Edge）  
+3. 地图需要**联网**，并在 `.env` 配置 `GOOGLE_MAPS_API_KEY`（Google Cloud 启用 Maps JavaScript API；搜索建议再启用 Places API）  
+4. AI / MySQL 历史需要 `npm start` 并配置 `AI_API_KEY`（及 Docker MySQL）  
 
-基本页面可用浏览器直接打开；**Google 底图与 AI** 需要 `npm start` 并配置对应 Key。
+基本页面可用浏览器直接打开；**AI 与规划历史**需要 `npm start`。
 
 ---
 
@@ -159,15 +184,15 @@ Google Cloud Console 需启用：
 | 限制 | 说明 |
 |---|---|
 | 无后端 / 无登录 | 数据只在本机浏览器 |
-| 交通方式未真实规划 | 不提供公交/地铁/驾车实时路线；连线只表示地点顺序；估算路程仅示意 |
+| 交通方式有限 | 地图支持步行/驾车 Directions；不提供公交/地铁换乘、实时路况重算 |
 | 不做目的地时效信息 | 不提供营业时间、门票余量、实时天气、航班延误等“会过期”的信息 |
-| 地图连线 ≠ 导航 | 界面会提示：顺序连线，非实际导航 |
+| 路线 ≠ 完整导航 App | Directions 按当天访问顺序规划；不替代手机地图的实时导航与 ETA |
 | 笔记 / 相册未完成 | 有入口与占位文案，完整编辑留到后续 |
 | 搜索依赖网络 | 断网时地点搜索可能失败；需换关键词或地图点选 |
 | 多端不同步 | 手机和电脑浏览器数据不自动同步 |
 | 示例旅行仅演示 | 示例目的地与日期用于课堂体验，不代表真实行程推荐 |
 
-关于交通：课堂版应让学生理解「规划里需要考虑怎么去」，但**本 MVP 只做到按日排地点顺序**；真实怎么坐车、要多久，需学生自行用地图 App 核对，不在本系统自动完成。
+关于交通：课堂版用 Directions 给出步行/驾车的大致路程与时间；公交方案与实时导航仍建议学生用手机地图 App 核对。
 
 ---
 
@@ -185,7 +210,8 @@ Google Cloud Console 需启用：
 
 - [ ] 能在某天添加至少一个地点（搜索或地图选点）  
 - [ ] 当天路线列表能看到该地点，地图上有对应标记  
-- [ ] 能理解并看到提示：连线是顺序，不是真实导航  
+- [ ] 当天 ≥2 个地点时能看到橙色 Directions 路线，并可切换步行/驾车  
+
 - [ ] （可选）能调整顺序或编辑地点名称后列表更新  
 
 ### C. 待办
