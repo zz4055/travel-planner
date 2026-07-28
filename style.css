@@ -2588,6 +2588,28 @@ body.in-create .sidebar {
   color: #9aa59f;
   letter-spacing: -2px;
   font-size: 14px;
+  cursor: grab;
+}
+
+.route-reorder-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ink-soft, #66756e);
+  line-height: 1.4;
+}
+
+.route-stop-card.is-reorderable,
+.route-stop-card[draggable="true"] {
+  cursor: grab;
+}
+
+.route-stop-card.is-dragging {
+  opacity: 0.55;
+}
+
+.route-stop-card.is-drop-target {
+  border-color: #e4572e;
+  box-shadow: 0 0 0 2px rgba(228, 87, 46, 0.18);
 }
 
 .route-unplanned {

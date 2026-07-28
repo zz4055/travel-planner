@@ -29,6 +29,7 @@ var TravelMapRoute = (function () {
   var lastSearchAt = 0;
   var searchCache = {};
   var searchInFlight = false;
+  var listDragItemId = "";
   var DEFAULT_CENTER = { lat: 18.7883, lng: 98.9853 };
 
   function t(key, vars) {
@@ -165,6 +166,38 @@ var TravelMapRoute = (function () {
       return legTravelByOrder[order];
     }
     return mockTravelFromPrevious(order);
+  }
+
+  function applyOrderedDayItems(orderedDayItems) {
+    var orderMap = {};
+    orderedDayItems.forEach(function (item, i) {
+      var mock = mockTravelFromPrevious(i + 1);
+      orderMap[item.id] = {
+        order: i + 1,
+        distanceFromPrevious: mock.distanceFromPrevious,
+        durationFromPrevious: mock.durationFromPrevious
+      };
+    });
+    saveItineraryItems(
+      getItems().map(function (item) {
+        return orderMap[item.id] ? Object.assign({}, item, orderMap[item.id]) : item;
+      })
+    );
+  }
+
+  function moveItemToIndex(itemId, newIndex) {
+    var dayItems = itemsForDate(selectedDate).slice();
+    var from = dayItems.findIndex(function (item) {
+      return item.id === itemId;
+    });
+    if (from < 0 || newIndex < 0 || newIndex >= dayItems.length || from === newIndex) {
+      return false;
+    }
+    var moved = dayItems.splice(from, 1)[0];
+    dayItems.splice(newIndex, 0, moved);
+    applyOrderedDayItems(dayItems);
+    selectedItemId = itemId;
+    return true;
   }
 
   function getSelectedTravelMode() {
@@ -1066,6 +1099,10 @@ var TravelMapRoute = (function () {
     if (selectedDate === "__overview__") {
       title.textContent = t("map.overviewTitle");
       empty.hidden = true;
+      var overviewHint = document.getElementById("routeReorderHint");
+      if (overviewHint) {
+        overviewHint.hidden = true;
+      }
       renderOverviewCards(list);
       if (unplannedWrap) {
         unplannedWrap.hidden = hideUnplanned;
@@ -1077,6 +1114,12 @@ var TravelMapRoute = (function () {
     title.textContent = shortDateLabel(selectedDate) + " · " + weekdayLabel(selectedDate);
     var dayItems = itemsForDate(selectedDate);
     empty.hidden = dayItems.length > 0;
+    var canReorder = dayItems.length >= 2;
+    var reorderHint = document.getElementById("routeReorderHint");
+    if (reorderHint) {
+      reorderHint.hidden = !canReorder;
+      reorderHint.textContent = t("map.dragReorderHint");
+    }
 
     dayItems.forEach(function (item, index) {
       var place = findPlace(item.placeId);
@@ -1084,7 +1127,13 @@ var TravelMapRoute = (function () {
         return;
       }
       var card = document.createElement("article");
-      card.className = "route-stop-card" + (item.id === selectedItemId ? " is-active" : "") + (item.completed ? " is-done" : "");
+      card.className =
+        "route-stop-card" +
+        (item.id === selectedItemId ? " is-active" : "") +
+        (item.completed ? " is-done" : "") +
+        (canReorder ? " is-reorderable" : "");
+      card.draggable = canReorder;
+      card.dataset.itemId = item.id;
       card.setAttribute("data-route-item", item.id);
 
       var thumb = place.image
@@ -1130,13 +1179,17 @@ var TravelMapRoute = (function () {
         (item.completed ? " checked" : "") +
         "></label>" +
         "<button type='button' class='btn small route-edit-btn'></button>" +
+        "<div class='route-reorder'>" +
         (editMode
-          ? "<div class='route-reorder'>" +
-            "<button type='button' class='btn small route-up' aria-label='up'>↑</button>" +
-            "<button type='button' class='btn small route-down' aria-label='down'>↓</button>" +
-            "<span class='route-drag-handle' aria-hidden='true'>⋮⋮</span>" +
-            "</div>"
+          ? "<button type='button' class='btn small route-up' aria-label='up'>↑</button>" +
+            "<button type='button' class='btn small route-down' aria-label='down'>↓</button>"
           : "") +
+        (canReorder
+          ? "<span class='route-drag-handle' title='" +
+            t("map.dragReorderHint").replace(/'/g, "") +
+            "' aria-hidden='true'>⋮⋮</span>"
+          : "") +
+        "</div>" +
         "</div>";
 
       card.querySelector("h4").textContent = place.name;
@@ -1176,6 +1229,58 @@ var TravelMapRoute = (function () {
             moveItem(item.id, 1);
           });
         }
+      }
+
+      if (canReorder) {
+        card.addEventListener("dragstart", function (event) {
+          if (event.target.closest("button, input, label, a")) {
+            event.preventDefault();
+            return;
+          }
+          listDragItemId = item.id;
+          card.classList.add("is-dragging");
+          selectedItemId = item.id;
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", item.id);
+          }
+        });
+        card.addEventListener("dragend", function () {
+          listDragItemId = "";
+          card.classList.remove("is-dragging");
+          list.querySelectorAll(".route-stop-card.is-drop-target").forEach(function (el) {
+            el.classList.remove("is-drop-target");
+          });
+        });
+        card.addEventListener("dragover", function (event) {
+          if (!listDragItemId || listDragItemId === item.id) {
+            return;
+          }
+          event.preventDefault();
+          card.classList.add("is-drop-target");
+          if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = "move";
+          }
+        });
+        card.addEventListener("dragleave", function () {
+          card.classList.remove("is-drop-target");
+        });
+        card.addEventListener("drop", function (event) {
+          event.preventDefault();
+          card.classList.remove("is-drop-target");
+          var fromId =
+            listDragItemId || (event.dataTransfer && event.dataTransfer.getData("text/plain"));
+          if (!fromId || fromId === item.id) {
+            return;
+          }
+          var targetIndex = dayItems.findIndex(function (entry) {
+            return entry.id === item.id;
+          });
+          if (moveItemToIndex(fromId, targetIndex)) {
+            // Re-render list + map markers/route together.
+            render();
+          }
+        });
       }
 
       list.appendChild(card);
@@ -1253,27 +1358,9 @@ var TravelMapRoute = (function () {
     if (index < 0 || target < 0 || target >= dayItems.length) {
       return;
     }
-    var swapped = dayItems.slice();
-    var temp = swapped[index];
-    swapped[index] = swapped[target];
-    swapped[target] = temp;
-
-    var orderMap = {};
-    swapped.forEach(function (item, i) {
-      var mock = mockTravelFromPrevious(i + 1);
-      orderMap[item.id] = {
-        order: i + 1,
-        distanceFromPrevious: mock.distanceFromPrevious,
-        durationFromPrevious: mock.durationFromPrevious
-      };
-    });
-
-    var next = getItems().map(function (item) {
-      return orderMap[item.id] ? Object.assign({}, item, orderMap[item.id]) : item;
-    });
-    saveItineraryItems(next);
-    selectedItemId = itemId;
-    render();
+    if (moveItemToIndex(itemId, target)) {
+      render();
+    }
   }
 
   function addPlaceToDay(placeId, dateStr) {

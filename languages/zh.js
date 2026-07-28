@@ -334,6 +334,7 @@ window.TRAVEL_I18N.zh = {
   "map.directionsNote": "橙色路线为 Google 导航路径（按当天访问顺序）",
   "map.directionsFallbackNote": "导航路线请求失败，已回退为顺序直线",
   "map.directionsLoading": "正在规划导航路线…",
+  "map.dragReorderHint": "拖动下方路线卡片可更换顺序，地图会同步更新",
   "map.travelMode": "出行方式",
   "map.modeWalking": "步行",
   "map.modeDriving": "驾车",

@@ -334,6 +334,7 @@ window.TRAVEL_I18N.en = {
   "map.directionsNote": "Orange path is a Google directions route (in visit order).",
   "map.directionsFallbackNote": "Directions failed; showing straight visit-order line.",
   "map.directionsLoading": "Planning directions…",
+  "map.dragReorderHint": "Drag stop cards below to reorder; the map updates with them",
   "map.travelMode": "Travel mode",
   "map.modeWalking": "Walking",
   "map.modeDriving": "Driving",
